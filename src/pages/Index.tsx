@@ -499,29 +499,35 @@ const Index = () => {
   if (showSplash) {
     return (
       <div className="fixed inset-0 bg-gradient-to-br from-background to-card flex items-center justify-center z-50 animate-fade-in">
-        <div className="text-center space-y-8 px-4">
+        <div className="text-center space-y-6 sm:space-y-8 px-4">
           <div className="text-6xl sm:text-8xl animate-scale-in">
             <span className="inline-block animate-pulse">♞</span>
             <span className="text-primary ml-4 font-mono">{"}"}</span>
           </div>
-          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold bg-gradient-to-r from-primary via-secondary to-primary bg-clip-text text-transparent animate-fade-in">
+          <h1 className="text-3xl sm:text-5xl lg:text-6xl font-bold bg-gradient-to-r from-primary via-secondary to-primary bg-clip-text text-transparent animate-fade-in">
             LJCCA CodeQuest
           </h1>
-          <p className="text-base sm:text-lg text-muted-foreground italic">
+          <p className="text-sm sm:text-base lg:text-lg text-muted-foreground italic px-4">
             Master C Programming Through the Ancient Game of Kings
           </p>
-          <div className="space-y-2 text-muted-foreground animate-fade-in text-sm sm:text-base">
+          <div className="space-y-2 text-muted-foreground animate-fade-in text-xs sm:text-sm">
             <p>Designed & Developed by: <span className="text-primary">Parth D. Joshi</span></p>
-            <p className="text-xs sm:text-sm">(Assistant Professor)</p>
-            <p className="mt-4">Innovative Idea by: <span className="text-secondary">Dr. Manish Shah</span></p>
-            <p className="text-xs sm:text-sm">(President, LJK)</p>
+            <p className="text-[10px] sm:text-xs">(Assistant Professor)</p>
+            <p className="mt-3 sm:mt-4">Innovative Idea by: <span className="text-secondary">Dr. Manish Shah</span></p>
+            <p className="text-[10px] sm:text-xs">(President, LJK)</p>
           </div>
           <Button
-            onClick={() => setShowSplash(false)}
+            onClick={() => {
+              setShowSplash(false);
+              // Start music on user interaction
+              if (!isMuted) {
+                audio.play().catch(e => console.log("Audio play failed:", e));
+              }
+            }}
             size="lg"
-            className="mt-8 bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-primary-foreground font-bold text-base sm:text-lg px-6 sm:px-8 py-5 sm:py-6 rounded-xl shadow-lg hover:shadow-xl transition-all hover:scale-105"
+            className="mt-6 sm:mt-8 bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-primary-foreground font-bold text-sm sm:text-base lg:text-lg px-6 sm:px-8 py-4 sm:py-6 rounded-xl shadow-lg hover:shadow-xl transition-all hover:scale-105"
           >
-            <Play className="mr-2 w-5 h-5 sm:w-6 sm:h-6" />
+            <Play className="mr-2 w-4 h-4 sm:w-5 sm:h-5" />
             Begin Your Quest
           </Button>
         </div>
@@ -625,29 +631,29 @@ const Index = () => {
                       }`}
                       onClick={() => !isLocked && startLesson(lesson)}
                     >
-                      <CardHeader>
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-1">
-                              <Badge variant="outline" className="text-xs">
+                      <CardHeader className="p-3 sm:p-4 lg:p-6">
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-1 sm:gap-2 mb-1">
+                              <Badge variant="outline" className="text-[10px] sm:text-xs px-1.5 py-0.5 sm:px-2 sm:py-1 whitespace-nowrap">
                                 Lesson {lesson.id}
                               </Badge>
-                              {isCompleted && <CheckCircle2 className="text-success w-4 h-4" />}
+                              {isCompleted && <CheckCircle2 className="text-success w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />}
                             </div>
-                            <CardTitle className="text-lg">{lesson.title}</CardTitle>
-                            <CardDescription className="text-sm mt-1">
+                            <CardTitle className="text-sm sm:text-base lg:text-lg truncate">{lesson.title}</CardTitle>
+                            <CardDescription className="text-xs sm:text-sm mt-1 line-clamp-2">
                               {lesson.subtitle}
                             </CardDescription>
                           </div>
                           {!isLocked && (
-                            <ChevronRight className={isCompleted ? "text-success" : "text-secondary"} />
+                            <ChevronRight className={`${isCompleted ? "text-success" : "text-secondary"} w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0`} />
                           )}
                         </div>
                       </CardHeader>
-                      <CardContent>
-                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                          <Code className="w-4 h-4" />
-                          <span>{lesson.concept}</span>
+                      <CardContent className="p-3 sm:p-4 lg:p-6 pt-0">
+                        <div className="flex items-center gap-1 sm:gap-2 text-[10px] sm:text-xs text-muted-foreground">
+                          <Code className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
+                          <span className="truncate">{lesson.concept}</span>
                         </div>
                       </CardContent>
                     </Card>
@@ -658,9 +664,9 @@ const Index = () => {
           </Card>
 
           {/* Footer */}
-          <div className="text-center text-sm text-muted-foreground border-t border-border pt-4">
-            <p>Designed & Developed by: <span className="text-primary">Parth D. Joshi</span> (Assistant Professor)</p>
-            <p>Innovative Idea by: <span className="text-secondary">Dr. Manish Shah</span> (President, LJK)</p>
+          <div className="text-center text-[10px] sm:text-xs lg:text-sm text-muted-foreground border-t border-border pt-4 pb-2 space-y-1">
+            <p>Designed & Developed by: <span className="text-primary font-medium">Parth D. Joshi</span> (Assistant Professor)</p>
+            <p>Innovative Idea by: <span className="text-secondary font-medium">Dr. Manish Shah</span> (President, LJK)</p>
           </div>
         </div>
       </div>
@@ -670,19 +676,19 @@ const Index = () => {
   // Badges Screen
   if (currentScreen === "badges") {
     return (
-      <div className="min-h-screen p-4 md:p-8">
-        <div className="max-w-6xl mx-auto space-y-8">
-          <div className="flex items-center gap-4">
-            <Button variant="outline" onClick={() => setCurrentScreen("dashboard")}>
+      <div className="min-h-screen p-3 sm:p-6 lg:p-8">
+        <div className="max-w-6xl mx-auto space-y-6 sm:space-y-8">
+          <div className="flex items-center gap-3 sm:gap-4">
+            <Button variant="outline" size="sm" onClick={() => setCurrentScreen("dashboard")}>
               ← Back
             </Button>
-            <h1 className="text-4xl font-bold flex items-center gap-3">
-              <Trophy className="text-primary" />
+            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold flex items-center gap-2 sm:gap-3">
+              <Trophy className="text-primary w-6 h-6 sm:w-8 sm:h-8 lg:w-10 lg:h-10" />
               The Armory
             </h1>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4 lg:gap-6">
             {allBadges.map((badge) => {
               const earned = progress.badges.includes(badge.id);
               return (
@@ -694,13 +700,13 @@ const Index = () => {
                       : "opacity-40 grayscale"
                   }`}
                 >
-                  <CardContent className="pt-6">
-                    <div className="text-6xl mb-4">{badge.icon}</div>
-                    <h3 className="font-bold mb-2">{badge.name}</h3>
-                    <p className="text-xs text-muted-foreground">{badge.requirement}</p>
+                  <CardContent className="pt-4 sm:pt-6 p-3 sm:p-6">
+                    <div className="text-4xl sm:text-5xl lg:text-6xl mb-3 sm:mb-4">{badge.icon}</div>
+                    <h3 className="font-bold text-sm sm:text-base mb-1 sm:mb-2">{badge.name}</h3>
+                    <p className="text-[10px] sm:text-xs text-muted-foreground">{badge.requirement}</p>
                     {earned && (
-                      <Badge className="mt-3" variant="outline">
-                        <Star className="w-3 h-3 mr-1" />
+                      <Badge className="mt-2 sm:mt-3 text-[10px] sm:text-xs" variant="outline">
+                        <Star className="w-2 h-2 sm:w-3 sm:h-3 mr-1" />
                         Earned
                       </Badge>
                     )}
@@ -721,80 +727,82 @@ const Index = () => {
   // Lesson Screen
   if (currentScreen === "lesson" && currentLesson) {
     return (
-      <div className="min-h-screen p-2 sm:p-4">
-        <div className="max-w-[1800px] mx-auto space-y-3 sm:space-y-4">
+      <div className="min-h-screen p-2 sm:p-4 lg:p-6">
+        <div className="max-w-[1800px] mx-auto space-y-2 sm:space-y-4">
           {/* Header */}
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-4">
-            <Button variant="outline" size="sm" onClick={() => setCurrentScreen("dashboard")}>
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-4 mb-2">
+            <Button variant="outline" size="sm" onClick={() => setCurrentScreen("dashboard")} className="text-xs sm:text-sm">
               ← Back
             </Button>
-            <Badge variant="outline" className="text-xs sm:text-sm lg:text-base px-2 sm:px-4 py-1 sm:py-2">
+            <Badge variant="outline" className="text-xs sm:text-sm px-2 sm:px-3 py-1">
               Lesson {currentLesson.id}: {currentLesson.title}
             </Badge>
           </div>
 
           {/* Dual Pane */}
-          <div className="grid lg:grid-cols-2 gap-3 sm:gap-4 h-[calc(100vh-100px)] sm:h-[calc(100vh-120px)]">
+          <div className="grid lg:grid-cols-2 gap-2 sm:gap-4 h-[calc(100vh-80px)] sm:h-[calc(100vh-120px)]">
             {/* Left Pane - The Codex */}
-            <Card className="flex flex-col">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Code className="text-secondary" />
+            <Card className="flex flex-col overflow-hidden">
+              <CardHeader className="p-3 sm:p-4 lg:p-6 pb-2 sm:pb-4">
+                <CardTitle className="flex items-center gap-2 text-base sm:text-lg lg:text-xl">
+                  <Code className="text-secondary w-4 h-4 sm:w-5 sm:h-5" />
                   The Codex
                 </CardTitle>
               </CardHeader>
-              <CardContent className="flex-1 flex flex-col space-y-4 overflow-auto">
+              <CardContent className="flex-1 flex flex-col space-y-2 sm:space-y-4 overflow-auto p-3 sm:p-4 lg:p-6 pt-0">
                 {/* Learn Tab */}
-                <div className="space-y-4">
-                  <div className="bg-secondary/10 border border-secondary/30 rounded-lg p-4">
-                    <h3 className="font-bold text-lg mb-2 text-secondary">♟️ Chess Analogy</h3>
-                    <p className="text-sm leading-relaxed">{currentLesson.analogy}</p>
+                <div className="space-y-2 sm:space-y-3">
+                  <div className="bg-secondary/10 border border-secondary/30 rounded-lg p-2 sm:p-3 lg:p-4">
+                    <h3 className="font-bold text-sm sm:text-base lg:text-lg mb-1 sm:mb-2 text-secondary">♟️ Chess Analogy</h3>
+                    <p className="text-xs sm:text-sm leading-relaxed">{currentLesson.analogy}</p>
                   </div>
                   
-                  <div className="bg-primary/10 border border-primary/30 rounded-lg p-4">
-                    <h3 className="font-bold text-lg mb-2 text-primary">💻 C Concept</h3>
-                    <p className="text-sm leading-relaxed">{currentLesson.explanation}</p>
+                  <div className="bg-primary/10 border border-primary/30 rounded-lg p-2 sm:p-3 lg:p-4">
+                    <h3 className="font-bold text-sm sm:text-base lg:text-lg mb-1 sm:mb-2 text-primary">💻 C Concept</h3>
+                    <p className="text-xs sm:text-sm leading-relaxed">{currentLesson.explanation}</p>
                   </div>
                 </div>
 
                 {/* Challenge */}
-                <div className="bg-card border-2 border-accent rounded-lg p-4">
-                  <h3 className="font-bold text-lg mb-2 flex items-center gap-2">
-                    <Award className="text-accent" />
+                <div className="bg-card border-2 border-accent rounded-lg p-2 sm:p-3 lg:p-4">
+                  <h3 className="font-bold text-sm sm:text-base lg:text-lg mb-2 flex items-center gap-2">
+                    <Award className="text-accent w-4 h-4 sm:w-5 sm:h-5" />
                     Your Challenge
                   </h3>
-                  <p className="text-sm mb-4">{currentLesson.challenge}</p>
+                  <p className="text-xs sm:text-sm mb-3 sm:mb-4">{currentLesson.challenge}</p>
                   
                   {/* Code Editor */}
                   <div className="space-y-2">
                     <textarea
                       value={userCode}
                       onChange={(e) => setUserCode(e.target.value)}
-                      className="w-full h-64 code-editor resize-none focus:ring-2 focus:ring-primary outline-none"
+                      className="w-full h-40 sm:h-52 lg:h-64 code-editor resize-none focus:ring-2 focus:ring-primary outline-none text-xs sm:text-sm"
                       spellCheck={false}
                     />
                     
-                    <div className="flex gap-2">
-                      <Button onClick={runCode} className="flex-1 bg-secondary hover:bg-secondary/80">
-                        <Play className="mr-2 w-4 h-4" />
+                    <div className="flex flex-wrap gap-1 sm:gap-2">
+                      <Button onClick={runCode} className="flex-1 min-w-[120px] bg-secondary hover:bg-secondary/80 text-xs sm:text-sm">
+                        <Play className="mr-1 sm:mr-2 w-3 h-3 sm:w-4 sm:h-4" />
                         Run Code
                       </Button>
                       <Button 
                         variant="outline" 
                         onClick={() => setShowHint(!showHint)}
+                        className="text-xs sm:text-sm px-2 sm:px-4"
                       >
                         💡 Hint
                       </Button>
                       <Button 
                         variant="outline" 
                         onClick={showSolution}
+                        className="text-xs sm:text-sm px-2 sm:px-4"
                       >
-                        Show Solution
+                        Solution
                       </Button>
                     </div>
 
                     {showHint && (
-                      <div className="bg-muted/20 border border-muted rounded p-3 text-sm">
+                      <div className="bg-muted/20 border border-muted rounded p-2 sm:p-3 text-xs sm:text-sm">
                         <strong>Hint:</strong> {currentLesson.hint}
                       </div>
                     )}
@@ -804,16 +812,16 @@ const Index = () => {
             </Card>
 
             {/* Right Pane - The Chessboard */}
-            <Card className="flex flex-col">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Crown className="text-primary" />
+            <Card className="flex flex-col overflow-hidden">
+              <CardHeader className="p-3 sm:p-4 lg:p-6 pb-2 sm:pb-4">
+                <CardTitle className="flex items-center gap-2 text-base sm:text-lg lg:text-xl">
+                  <Crown className="text-primary w-4 h-4 sm:w-5 sm:h-5" />
                   The Chessboard
                 </CardTitle>
               </CardHeader>
-              <CardContent className="flex-1 flex items-center justify-center">
+              <CardContent className="flex-1 flex items-center justify-center p-2 sm:p-4 lg:p-6">
                 <div className="aspect-square w-full max-w-[600px]">
-                  <div className="grid grid-cols-8 gap-0 border-4 border-primary rounded-lg overflow-hidden shadow-2xl">
+                  <div className="grid grid-cols-8 gap-0 border-2 sm:border-4 border-primary rounded-lg overflow-hidden shadow-2xl">
                     {Array.from({ length: 64 }).map((_, i) => {
                       const row = Math.floor(i / 8);
                       const col = i % 8;
@@ -832,7 +840,7 @@ const Index = () => {
                       return (
                         <div
                           key={i}
-                          className={`aspect-square flex items-center justify-center text-4xl md:text-5xl lg:text-6xl font-bold transition-all ${
+                          className={`aspect-square flex items-center justify-center text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold transition-all ${
                             isLight ? "bg-chess-light" : "bg-chess-dark"
                           } ${piece ? "hover:scale-110 cursor-pointer" : ""}`}
                         >
@@ -843,7 +851,7 @@ const Index = () => {
                   </div>
                   
                   {/* Board Labels */}
-                  <div className="flex justify-around mt-2 text-xs text-muted-foreground font-mono">
+                  <div className="flex justify-around mt-1 sm:mt-2 text-[10px] sm:text-xs text-muted-foreground font-mono">
                     {["a", "b", "c", "d", "e", "f", "g", "h"].map(f => (
                       <span key={f}>{f}</span>
                     ))}
