@@ -291,13 +291,12 @@ const Index = () => {
   const [currentScreen, setCurrentScreen] = useState<"dashboard" | "lesson" | "badges">("dashboard");
   const [currentLesson, setCurrentLesson] = useState<Lesson | null>(null);
   const [userCode, setUserCode] = useState("");
-  const [isMuted, setIsMuted] = useState(true);
+  const [isMuted, setIsMuted] = useState(false);
   const [showHint, setShowHint] = useState(false);
   const [audio] = useState(() => {
-    const bgMusic = new Audio();
-    bgMusic.src = "data:audio/mpeg;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4Ljc2LjEwMAAAAAAAAAAAAAAA//tQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWGluZwAAAA8AAAACAAADhAC7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7//////////////////////////////////////////////////////////////////8AAAAATGF2YzU4LjEzAAAAAAAAAAAAAAAAJAAAAAAAAAAAA4SMGZ/3AAAAAAAA//sQZAAP8AAAaQAAAAgAAA0gAAABAAABpAAAACAAADSAAAAETEFNRTMuMTAwVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVQ==";
+    const bgMusic = new Audio('https://cdn.pixabay.com/audio/2022/03/10/audio_17b17ca3b2.mp3');
     bgMusic.loop = true;
-    bgMusic.volume = 0.3;
+    bgMusic.volume = 0.2;
     return bgMusic;
   });
   
@@ -334,10 +333,6 @@ const Index = () => {
         setProgress(prev => ({ ...prev, streak: 1, lastVisit: today }));
       }
     }
-    
-    // Hide splash after 3 seconds
-    const timer = setTimeout(() => setShowSplash(false), 3000);
-    return () => clearTimeout(timer);
   }, []);
 
   // Save progress
@@ -504,21 +499,31 @@ const Index = () => {
   if (showSplash) {
     return (
       <div className="fixed inset-0 bg-gradient-to-br from-background to-card flex items-center justify-center z-50 animate-fade-in">
-        <div className="text-center space-y-8">
-          <div className="text-8xl animate-scale-in">
+        <div className="text-center space-y-8 px-4">
+          <div className="text-6xl sm:text-8xl animate-scale-in">
             <span className="inline-block animate-pulse">♞</span>
             <span className="text-primary ml-4 font-mono">{"}"}</span>
           </div>
-          <h1 className="text-6xl font-bold bg-gradient-to-r from-primary via-secondary to-primary bg-clip-text text-transparent animate-fade-in">
+          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold bg-gradient-to-r from-primary via-secondary to-primary bg-clip-text text-transparent animate-fade-in">
             LJCCA CodeQuest
           </h1>
-          <div className="space-y-2 text-muted-foreground animate-fade-in">
-            <p className="text-lg">Designed & Developed by: <span className="text-primary">Parth D. Joshi</span></p>
-            <p className="text-sm">(Assistant Professor)</p>
-            <p className="text-lg mt-4">Innovative Idea by: <span className="text-secondary">Dr. Manish Shah</span></p>
-            <p className="text-sm">(President, LJK)</p>
+          <p className="text-base sm:text-lg text-muted-foreground italic">
+            Master C Programming Through the Ancient Game of Kings
+          </p>
+          <div className="space-y-2 text-muted-foreground animate-fade-in text-sm sm:text-base">
+            <p>Designed & Developed by: <span className="text-primary">Parth D. Joshi</span></p>
+            <p className="text-xs sm:text-sm">(Assistant Professor)</p>
+            <p className="mt-4">Innovative Idea by: <span className="text-secondary">Dr. Manish Shah</span></p>
+            <p className="text-xs sm:text-sm">(President, LJK)</p>
           </div>
-          <Progress value={100} className="w-64 mx-auto animate-pulse" />
+          <Button
+            onClick={() => setShowSplash(false)}
+            size="lg"
+            className="mt-8 bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-primary-foreground font-bold text-base sm:text-lg px-6 sm:px-8 py-5 sm:py-6 rounded-xl shadow-lg hover:shadow-xl transition-all hover:scale-105"
+          >
+            <Play className="mr-2 w-5 h-5 sm:w-6 sm:h-6" />
+            Begin Your Quest
+          </Button>
         </div>
       </div>
     );
