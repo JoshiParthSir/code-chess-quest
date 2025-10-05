@@ -293,11 +293,25 @@ const Index = () => {
   const [userCode, setUserCode] = useState("");
   const [isMuted, setIsMuted] = useState(false);
   const [showHint, setShowHint] = useState(false);
+  const [chessboardAnimate, setChessboardAnimate] = useState(false);
+  
   const [audio] = useState(() => {
     const bgMusic = new Audio('https://cdn.pixabay.com/audio/2022/03/10/audio_17b17ca3b2.mp3');
     bgMusic.loop = true;
-    bgMusic.volume = 0.2;
+    bgMusic.volume = 0.3;
     return bgMusic;
+  });
+  
+  const [successSound] = useState(() => {
+    const sound = new Audio('https://cdn.pixabay.com/audio/2022/03/15/audio_c610232c26.mp3');
+    sound.volume = 0.5;
+    return sound;
+  });
+  
+  const [errorSound] = useState(() => {
+    const sound = new Audio('https://cdn.pixabay.com/audio/2022/03/24/audio_a87fb85a27.mp3');
+    sound.volume = 0.4;
+    return sound;
   });
   
   const [progress, setProgress] = useState<UserProgress>({
@@ -340,13 +354,24 @@ const Index = () => {
     localStorage.setItem("codequest-progress", JSON.stringify(progress));
   }, [progress]);
 
-  // Handle music
+  // Handle music - better implementation
   useEffect(() => {
-    if (!isMuted && !showSplash) {
-      audio.play().catch(() => {});
-    } else {
+    const playAudio = async () => {
+      if (!isMuted && !showSplash) {
+        try {
+          await audio.play();
+        } catch (error) {
+          console.log("Audio autoplay prevented:", error);
+        }
+      } else {
+        audio.pause();
+      }
+    };
+    playAudio();
+    
+    return () => {
       audio.pause();
-    }
+    };
   }, [isMuted, showSplash, audio]);
 
   const getLevelName = (level: number) => {
@@ -438,6 +463,15 @@ const Index = () => {
     }
     
     if (isCorrect) {
+      // Play success sound
+      if (!isMuted) {
+        successSound.play().catch(() => {});
+      }
+      
+      // Trigger chessboard animation
+      setChessboardAnimate(true);
+      setTimeout(() => setChessboardAnimate(false), 1000);
+      
       toast({
         title: "🎉 Challenge Complete!",
         description: `You've mastered ${currentLesson.title}!`,
@@ -477,6 +511,11 @@ const Index = () => {
         }));
       }
     } else {
+      // Play error sound
+      if (!isMuted) {
+        errorSound.play().catch(() => {});
+      }
+      
       toast({
         title: "Not quite right",
         description: "Try again or use the hint!",
@@ -500,11 +539,11 @@ const Index = () => {
     return (
       <div className="fixed inset-0 bg-gradient-to-br from-background to-card flex items-center justify-center z-50 animate-fade-in">
         <div className="text-center space-y-6 sm:space-y-8 px-4">
-          <div className="text-6xl sm:text-8xl animate-scale-in">
-            <span className="inline-block animate-pulse">♞</span>
-            <span className="text-primary ml-4 font-mono">{"}"}</span>
+           <div className="text-6xl sm:text-8xl bounce-in">
+            <span className="inline-block float">♞</span>
+            <span className="text-primary ml-4 font-mono bounce-in" style={{ animationDelay: "0.3s" }}>{"}"}</span>
           </div>
-          <h1 className="text-3xl sm:text-5xl lg:text-6xl font-bold bg-gradient-to-r from-primary via-secondary to-primary bg-clip-text text-transparent animate-fade-in">
+           <h1 className="text-3xl sm:text-5xl lg:text-6xl font-bold text-gradient-animate float">
             LJCCA CodeQuest
           </h1>
           <p className="text-sm sm:text-base lg:text-lg text-muted-foreground italic px-4">
@@ -562,7 +601,7 @@ const Index = () => {
           </div>
 
           {/* User Profile Card */}
-          <Card className="border-primary/20 shadow-lg">
+          <Card className="border-primary/20 shadow-lg hover-lift slide-up">
             <CardHeader className="p-4 sm:p-6">
               <div className="flex flex-col sm:flex-row items-start justify-between gap-4">
                 <div className="flex-1">
@@ -605,7 +644,7 @@ const Index = () => {
           </Card>
 
           {/* The Grandmaster's Path */}
-          <Card>
+          <Card className="slide-up" style={{ animationDelay: "0.1s" }}>
             <CardHeader className="p-4 sm:p-6">
               <CardTitle className="text-xl sm:text-2xl flex items-center gap-2">
                 <Sparkles className="text-secondary w-5 h-5 sm:w-6 sm:h-6" />
@@ -620,15 +659,16 @@ const Index = () => {
                   const isLocked = lesson.id > 1 && !progress.completedLessons.includes(lesson.id - 1);
                   
                   return (
-                    <Card
+                     <Card
                       key={lesson.id}
-                      className={`cursor-pointer transition-all duration-300 ${
+                      className={`cursor-pointer transition-all duration-300 hover-lift ${
                         isCompleted 
-                          ? "border-success bg-success/5 hover:shadow-lg hover:shadow-success/20" 
+                          ? "border-success bg-success/5 hover:shadow-lg hover:shadow-success/20 slide-up" 
                           : isLocked
                           ? "opacity-50 cursor-not-allowed"
-                          : "border-secondary/30 pulse-glow hover:shadow-lg hover:shadow-secondary/20"
+                          : "border-secondary/30 pulse-glow hover:shadow-lg hover:shadow-secondary/20 slide-up"
                       }`}
+                      style={{ animationDelay: `${lesson.id * 0.05}s` }}
                       onClick={() => !isLocked && startLesson(lesson)}
                     >
                       <CardHeader className="p-3 sm:p-4 lg:p-6">
@@ -819,9 +859,11 @@ const Index = () => {
                   The Chessboard
                 </CardTitle>
               </CardHeader>
-              <CardContent className="flex-1 flex items-center justify-center p-2 sm:p-4 lg:p-6">
-                <div className="aspect-square w-full max-w-[600px]">
-                  <div className="grid grid-cols-8 gap-0 border-2 sm:border-4 border-primary rounded-lg overflow-hidden shadow-2xl">
+              <CardContent className="flex-1 flex items-center justify-center p-2 sm:p-4 lg:p-6 overflow-auto">
+                <div className="w-full max-w-full sm:max-w-[90vw] lg:max-w-[600px] mx-auto">
+                  <div className={`grid grid-cols-8 gap-0 border-2 sm:border-4 border-primary rounded-lg overflow-hidden shadow-2xl transition-all duration-500 ${
+                    chessboardAnimate ? "animate-scale-in shadow-[0_0_40px_rgba(155,135,245,0.6)]" : ""
+                  }`}>
                     {Array.from({ length: 64 }).map((_, i) => {
                       const row = Math.floor(i / 8);
                       const col = i % 8;
@@ -829,22 +871,123 @@ const Index = () => {
                       const rank = 8 - row;
                       const file = String.fromCharCode(97 + col);
                       
-                      // Show pieces based on lesson
+                      // Dynamic piece placement based on lesson
                       let piece = "";
-                      if (currentLesson.id >= 1 && rank === 1 && file === "e") piece = "♔";
-                      if (currentLesson.id >= 2 && rank === 2 && file === "e") piece = "♙";
-                      if (currentLesson.id >= 3 && rank === 2) piece = "♙";
-                      if (currentLesson.id >= 4 && rank === 4 && file === "e") piece = "♙";
-                      if (currentLesson.id >= 4 && rank === 2 && file === "e") piece = "";
+                      let shouldHighlight = false;
+                      
+                      // Lesson 1: King on e1
+                      if (currentLesson.id === 1) {
+                        if (rank === 1 && file === "e") {
+                          piece = "♔";
+                          shouldHighlight = chessboardAnimate;
+                        }
+                      }
+                      
+                      // Lesson 2: E-pawn on e2
+                      if (currentLesson.id === 2) {
+                        if (rank === 2 && file === "e") {
+                          piece = "♙";
+                          shouldHighlight = chessboardAnimate;
+                        }
+                      }
+                      
+                      // Lesson 3: All 8 pawns on rank 2
+                      if (currentLesson.id === 3) {
+                        if (rank === 2) {
+                          piece = "♙";
+                          shouldHighlight = chessboardAnimate;
+                        }
+                      }
+                      
+                      // Lesson 4: E-pawn moves to e4
+                      if (currentLesson.id === 4) {
+                        if (rank === 4 && file === "e") {
+                          piece = "♙";
+                          shouldHighlight = chessboardAnimate;
+                        }
+                        if (rank === 2 && file !== "e") piece = "♙";
+                      }
+                      
+                      // Lesson 5: Queen and Rook fork
+                      if (currentLesson.id === 5) {
+                        if (rank === 4 && file === "d") piece = "♕";
+                        if (rank === 4 && file === "h") piece = "♖";
+                        if (rank === 6 && file === "f") {
+                          piece = "♞";
+                          shouldHighlight = chessboardAnimate;
+                        }
+                      }
+                      
+                      // Lesson 6: Knight showing L-moves
+                      if (currentLesson.id === 6) {
+                        if (rank === 4 && file === "e") {
+                          piece = "♞";
+                          shouldHighlight = chessboardAnimate;
+                        }
+                        // Show possible knight move squares
+                        const knightMoves = [[6,6],[6,4],[5,7],[5,3],[3,7],[3,3],[2,6],[2,4]];
+                        if (chessboardAnimate && knightMoves.some(([r,c]) => r === rank && String.fromCharCode(97+c) === file)) {
+                          shouldHighlight = true;
+                        }
+                      }
+                      
+                      // Lesson 7: Rook patrolling ranks
+                      if (currentLesson.id === 7) {
+                        if (file === "a" && rank <= (chessboardAnimate ? 8 : 1)) {
+                          piece = "♖";
+                          shouldHighlight = chessboardAnimate && rank === 8;
+                        }
+                        if (file === "a" && !chessboardAnimate && rank === 1) {
+                          piece = "♖";
+                        }
+                      }
+                      
+                      // Lesson 8: Piece notation
+                      if (currentLesson.id === 8) {
+                        if (rank === 1) {
+                          if (file === "a" || file === "h") piece = "♖";
+                          if (file === "b" || file === "g") piece = "♞";
+                          if (file === "c" || file === "f") piece = "♗";
+                          if (file === "d") piece = "♕";
+                          if (file === "e") {
+                            piece = "♔";
+                            shouldHighlight = chessboardAnimate;
+                          }
+                        }
+                      }
+                      
+                      // Lesson 9-10: Various board states
+                      if (currentLesson.id >= 9 && currentLesson.id <= 10) {
+                        if (rank === 1) {
+                          if (file === "e") piece = "♔";
+                          if (file === "a") piece = "♖";
+                        }
+                        if (rank === 2 && (file === "f" || file === "g" || file === "h")) piece = "♙";
+                      }
+                      
+                      // Lessons 11-20: Show various piece arrangements
+                      if (currentLesson.id >= 11) {
+                        if (rank === 1 && file === "e") piece = "♔";
+                        if (rank === 1 && file === "d") piece = "♕";
+                        if (rank === 2 && file >= "e" && file <= "h") piece = "♙";
+                        if (chessboardAnimate && rank === 4 && file === "e") {
+                          piece = "♙";
+                          shouldHighlight = true;
+                        }
+                      }
                       
                       return (
                         <div
                           key={i}
-                          className={`aspect-square flex items-center justify-center text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold transition-all ${
+                          className={`aspect-square flex items-center justify-center text-xl xs:text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold transition-all duration-300 ${
                             isLight ? "bg-chess-light" : "bg-chess-dark"
-                          } ${piece ? "hover:scale-110 cursor-pointer" : ""}`}
+                          } ${piece ? "hover:scale-110 cursor-pointer animate-fade-in" : ""} ${
+                            shouldHighlight ? "bg-primary/30 animate-pulse ring-2 ring-primary" : ""
+                          }`}
                         >
-                          {piece}
+                          <span className={chessboardAnimate && piece ? "animate-scale-in" : ""}>
+                            {piece}
+                          </span>
                         </div>
                       );
                     })}
@@ -853,7 +996,7 @@ const Index = () => {
                   {/* Board Labels */}
                   <div className="flex justify-around mt-1 sm:mt-2 text-[10px] sm:text-xs text-muted-foreground font-mono">
                     {["a", "b", "c", "d", "e", "f", "g", "h"].map(f => (
-                      <span key={f}>{f}</span>
+                      <span key={f} className="text-center w-[12.5%]">{f}</span>
                     ))}
                   </div>
                 </div>
