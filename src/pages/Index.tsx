@@ -3,10 +3,11 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { toast } from "@/hooks/use-toast";
 import { 
   Trophy, Code, Crown, Flame, Star, Award, CheckCircle2, 
-  Play, Volume2, VolumeX, ChevronRight, Sparkles
+  Play, Volume2, VolumeX, ChevronRight, Sparkles, PartyPopper, ArrowRight, Home
 } from "lucide-react";
 
 // Types
@@ -291,9 +292,11 @@ const Index = () => {
   const [currentScreen, setCurrentScreen] = useState<"dashboard" | "lesson" | "badges">("dashboard");
   const [currentLesson, setCurrentLesson] = useState<Lesson | null>(null);
   const [userCode, setUserCode] = useState("");
-  const [isMuted, setIsMuted] = useState(false);
+  const [isMuted, setIsMuted] = useState(true); // Start muted to avoid autoplay issues
   const [showHint, setShowHint] = useState(false);
   const [chessboardAnimate, setChessboardAnimate] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [audioInitialized, setAudioInitialized] = useState(false);
   
   const [audio] = useState(() => {
     const bgMusic = new Audio('https://cdn.pixabay.com/audio/2022/03/10/audio_17b17ca3b2.mp3');
@@ -354,25 +357,32 @@ const Index = () => {
     localStorage.setItem("codequest-progress", JSON.stringify(progress));
   }, [progress]);
 
-  // Handle music - better implementation
+  // Handle music - improved implementation
   useEffect(() => {
     const playAudio = async () => {
-      if (!isMuted && !showSplash) {
+      if (!isMuted && audioInitialized) {
         try {
+          audio.currentTime = 0; // Reset to start
           await audio.play();
+          console.log("Music playing");
         } catch (error) {
-          console.log("Audio autoplay prevented:", error);
+          console.log("Audio play failed:", error);
         }
       } else {
         audio.pause();
       }
     };
-    playAudio();
+    
+    if (audioInitialized) {
+      playAudio();
+    }
     
     return () => {
-      audio.pause();
+      if (isMuted) {
+        audio.pause();
+      }
     };
-  }, [isMuted, showSplash, audio]);
+  }, [isMuted, audioInitialized, audio]);
 
   const getLevelName = (level: number) => {
     if (level < 5) return "Pawn";
@@ -472,6 +482,9 @@ const Index = () => {
       setChessboardAnimate(true);
       setTimeout(() => setChessboardAnimate(false), 1000);
       
+      // Show success modal
+      setShowSuccessModal(true);
+      
       toast({
         title: "🎉 Challenge Complete!",
         description: `You've mastered ${currentLesson.title}!`,
@@ -558,10 +571,9 @@ const Index = () => {
           <Button
             onClick={() => {
               setShowSplash(false);
-              // Start music on user interaction
-              if (!isMuted) {
-                audio.play().catch(e => console.log("Audio play failed:", e));
-              }
+              setAudioInitialized(true);
+              setIsMuted(false); // Unmute when user clicks
+              // Music will auto-start via useEffect
             }}
             size="lg"
             className="mt-6 sm:mt-8 bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-primary-foreground font-bold text-sm sm:text-base lg:text-lg px-6 sm:px-8 py-4 sm:py-6 rounded-xl shadow-lg hover:shadow-xl transition-all hover:scale-105"
@@ -593,8 +605,15 @@ const Index = () => {
             <Button
               variant="outline"
               size="icon"
-              onClick={() => setIsMuted(!isMuted)}
+              onClick={() => {
+                const newMutedState = !isMuted;
+                setIsMuted(newMutedState);
+                if (!newMutedState && audioInitialized) {
+                  audio.play().catch(e => console.log("Audio toggle failed:", e));
+                }
+              }}
               className="rounded-full"
+              title={isMuted ? "Unmute music" : "Mute music"}
             >
               {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
             </Button>
@@ -766,8 +785,78 @@ const Index = () => {
 
   // Lesson Screen
   if (currentScreen === "lesson" && currentLesson) {
+    const nextLesson = lessons.find(l => l.id === currentLesson.id + 1);
+    const hasNextLesson = !!nextLesson;
+    
     return (
-      <div className="min-h-screen p-2 sm:p-4 lg:p-6">
+      <>
+        {/* Success Modal */}
+        <Dialog open={showSuccessModal} onOpenChange={setShowSuccessModal}>
+          <DialogContent className="sm:max-w-md border-primary/50 bg-gradient-to-br from-card via-card to-primary/10">
+            <DialogHeader>
+              <div className="flex justify-center mb-4">
+                <div className="text-6xl bounce-in">
+                  <PartyPopper className="w-20 h-20 text-primary animate-pulse" />
+                </div>
+              </div>
+              <DialogTitle className="text-2xl sm:text-3xl text-center text-gradient-animate">
+                🎉 Quest Complete! 🎉
+              </DialogTitle>
+              <DialogDescription className="text-center text-base sm:text-lg pt-2">
+                You've mastered <span className="text-primary font-bold">{currentLesson.title}</span>!
+              </DialogDescription>
+            </DialogHeader>
+            
+            <div className="flex flex-col gap-4 py-4">
+              <div className="bg-primary/10 border border-primary/30 rounded-lg p-4 text-center">
+                <div className="text-4xl mb-2">+100 XP</div>
+                <div className="text-sm text-muted-foreground">Experience Gained</div>
+              </div>
+              
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  className="flex-1"
+                  onClick={() => {
+                    setShowSuccessModal(false);
+                    setCurrentScreen("dashboard");
+                  }}
+                >
+                  <Home className="mr-2 w-4 h-4" />
+                  Dashboard
+                </Button>
+                
+                {hasNextLesson && (
+                  <Button
+                    className="flex-1 bg-gradient-to-r from-primary to-secondary hover:from-primary/90 hover:to-secondary/90"
+                    onClick={() => {
+                      setShowSuccessModal(false);
+                      startLesson(nextLesson);
+                    }}
+                  >
+                    Next Quest
+                    <ArrowRight className="ml-2 w-4 h-4" />
+                  </Button>
+                )}
+                
+                {!hasNextLesson && (
+                  <Button
+                    className="flex-1 bg-gradient-to-r from-primary to-secondary hover:from-primary/90 hover:to-secondary/90"
+                    onClick={() => {
+                      setShowSuccessModal(false);
+                      setCurrentScreen("badges");
+                    }}
+                  >
+                    View Badges
+                    <Trophy className="ml-2 w-4 h-4" />
+                  </Button>
+                )}
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        <div className="min-h-screen p-2 sm:p-4 lg:p-6">
         <div className="max-w-[1800px] mx-auto space-y-2 sm:space-y-4">
           {/* Header */}
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-4 mb-2">
@@ -1005,6 +1094,7 @@ const Index = () => {
           </div>
         </div>
       </div>
+      </>
     );
   }
 

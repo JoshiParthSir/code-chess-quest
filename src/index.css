@@ -177,6 +177,27 @@ All colors MUST be HSL.
     -webkit-text-fill-color: transparent;
     animation: shimmer 3s infinite;
   }
+  
+  /* Confetti Animation */
+  @keyframes confetti-fall {
+    0% {
+      transform: translateY(-100vh) rotate(0deg);
+      opacity: 1;
+    }
+    100% {
+      transform: translateY(100vh) rotate(720deg);
+      opacity: 0;
+    }
+  }
+  
+  .confetti {
+    position: fixed;
+    width: 10px;
+    height: 10px;
+    background: hsl(45 100% 51%);
+    pointer-events: none;
+    z-index: 9999;
+  }
 
   /* Scrollbar styling */
   ::-webkit-scrollbar {
