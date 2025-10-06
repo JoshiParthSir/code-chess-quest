@@ -317,6 +317,18 @@ const Index = () => {
     return sound;
   });
   
+  const [moveSound] = useState(() => {
+    const sound = new Audio('https://cdn.pixabay.com/audio/2023/11/16/audio_c1e94b8727.mp3');
+    sound.volume = 0.3;
+    return sound;
+  });
+  
+  const [levelUpSound] = useState(() => {
+    const sound = new Audio('https://cdn.pixabay.com/audio/2022/08/02/audio_884fe25c21.mp3');
+    sound.volume = 0.6;
+    return sound;
+  });
+  
   const [progress, setProgress] = useState<UserProgress>({
     username: "Knight Errant",
     level: 1,
@@ -357,30 +369,34 @@ const Index = () => {
     localStorage.setItem("codequest-progress", JSON.stringify(progress));
   }, [progress]);
 
-  // Handle music - improved implementation
+  // Handle music - improved implementation with user interaction
   useEffect(() => {
+    if (!audioInitialized) return;
+    
     const playAudio = async () => {
-      if (!isMuted && audioInitialized) {
-        try {
-          audio.currentTime = 0; // Reset to start
-          await audio.play();
-          console.log("Music playing");
-        } catch (error) {
-          console.log("Audio play failed:", error);
+      try {
+        if (!isMuted) {
+          audio.currentTime = 0;
+          audio.volume = 0.3;
+          const playPromise = audio.play();
+          
+          if (playPromise !== undefined) {
+            playPromise
+              .then(() => console.log("Music started"))
+              .catch(error => console.log("Audio autoplay prevented:", error));
+          }
+        } else {
+          audio.pause();
         }
-      } else {
-        audio.pause();
+      } catch (error) {
+        console.log("Audio error:", error);
       }
     };
     
-    if (audioInitialized) {
-      playAudio();
-    }
+    playAudio();
     
     return () => {
-      if (isMuted) {
-        audio.pause();
-      }
+      audio.pause();
     };
   }, [isMuted, audioInitialized, audio]);
 
@@ -398,6 +414,11 @@ const Index = () => {
     setUserCode(lesson.starterCode);
     setShowHint(false);
     setCurrentScreen("lesson");
+    
+    // Play move sound when starting lesson
+    if (!isMuted) {
+      moveSound.play().catch(() => {});
+    }
   };
 
   const runCode = () => {
@@ -473,29 +494,37 @@ const Index = () => {
     }
     
     if (isCorrect) {
+      // Trigger chessboard animation FIRST
+      setChessboardAnimate(true);
+      
       // Play success sound
       if (!isMuted) {
         successSound.play().catch(() => {});
       }
       
-      // Trigger chessboard animation
-      setChessboardAnimate(true);
-      setTimeout(() => setChessboardAnimate(false), 1000);
-      
-      // Show success modal
-      setShowSuccessModal(true);
-      
       toast({
-        title: "🎉 Challenge Complete!",
-        description: `You've mastered ${currentLesson.title}!`,
+        title: "Perfect! ✨",
+        description: "You've solved the puzzle!",
       });
       
-      // Award XP and mark lesson complete
+      // Show success modal AFTER animation (2 seconds delay)
+      setTimeout(() => {
+        setChessboardAnimate(false);
+        setShowSuccessModal(true);
+      }, 2000);
+      
+      // Update progress if first time completing
       if (!progress.completedLessons.includes(currentLesson.id)) {
+        const newCompleted = [...progress.completedLessons, currentLesson.id].sort((a, b) => a - b);
         const newXP = progress.xp + 100;
+        const oldLevel = progress.level;
         const newLevel = Math.floor(newXP / 500) + 1;
-        const newCompleted = [...progress.completedLessons, currentLesson.id];
         const newBadges = [...progress.badges];
+        
+        // Play level up sound if leveled up
+        if (newLevel > oldLevel && !isMuted) {
+          setTimeout(() => levelUpSound.play().catch(() => {}), 500);
+        }
         
         // Award badges
         if (currentLesson.id === 1 && !newBadges.includes("first-move")) {
@@ -573,10 +602,11 @@ const Index = () => {
               setShowSplash(false);
               setAudioInitialized(true);
               setIsMuted(false); // Unmute when user clicks
-              // Music will auto-start via useEffect
+              // Play move sound on start
+              moveSound.play().catch(() => {});
             }}
             size="lg"
-            className="mt-6 sm:mt-8 bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-primary-foreground font-bold text-sm sm:text-base lg:text-lg px-6 sm:px-8 py-4 sm:py-6 rounded-xl shadow-lg hover:shadow-xl transition-all hover:scale-105"
+            className="mt-6 sm:mt-8 bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-primary-foreground font-bold text-sm sm:text-base lg:text-lg px-6 sm:px-8 py-4 sm:py-6 rounded-xl shadow-lg hover:shadow-xl transition-all hover:scale-105 animate-pulse"
           >
             <Play className="mr-2 w-4 h-4 sm:w-5 sm:h-5" />
             Begin Your Quest
@@ -820,6 +850,10 @@ const Index = () => {
                   onClick={() => {
                     setShowSuccessModal(false);
                     setCurrentScreen("dashboard");
+                    // Play move sound
+                    if (!isMuted) {
+                      moveSound.play().catch(() => {});
+                    }
                   }}
                 >
                   <Home className="mr-2 w-4 h-4" />
@@ -828,9 +862,13 @@ const Index = () => {
                 
                 {hasNextLesson && (
                   <Button
-                    className="flex-1 bg-gradient-to-r from-primary to-secondary hover:from-primary/90 hover:to-secondary/90"
+                    className="flex-1 bg-gradient-to-r from-primary to-secondary hover:from-primary/90 hover:to-secondary/90 animate-pulse"
                     onClick={() => {
                       setShowSuccessModal(false);
+                      // Play move sound
+                      if (!isMuted) {
+                        moveSound.play().catch(() => {});
+                      }
                       startLesson(nextLesson);
                     }}
                   >

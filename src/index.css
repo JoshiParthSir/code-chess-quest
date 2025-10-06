@@ -190,6 +190,21 @@ All colors MUST be HSL.
     }
   }
   
+  @keyframes glow-pulse {
+    0%, 100% { 
+      box-shadow: 0 0 20px hsla(45 100% 51% / 0.4);
+    }
+    50% { 
+      box-shadow: 0 0 40px hsla(45 100% 51% / 0.8), 0 0 60px hsla(195 100% 50% / 0.6);
+    }
+  }
+  
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+    20%, 40%, 60%, 80% { transform: translateX(5px); }
+  }
+  
   .confetti {
     position: fixed;
     width: 10px;
@@ -197,6 +212,14 @@ All colors MUST be HSL.
     background: hsl(45 100% 51%);
     pointer-events: none;
     z-index: 9999;
+  }
+  
+  .glow-pulse {
+    animation: glow-pulse 2s ease-in-out infinite;
+  }
+  
+  .shake {
+    animation: shake 0.5s ease-in-out;
   }
 
   /* Scrollbar styling */
