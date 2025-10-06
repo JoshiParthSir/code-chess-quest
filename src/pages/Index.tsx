@@ -288,16 +288,18 @@ const allBadges = [
 ];
 
 const Index = () => {
+  // State declarations
   const [showSplash, setShowSplash] = useState(true);
   const [currentScreen, setCurrentScreen] = useState<"dashboard" | "lesson" | "badges">("dashboard");
   const [currentLesson, setCurrentLesson] = useState<Lesson | null>(null);
   const [userCode, setUserCode] = useState("");
-  const [isMuted, setIsMuted] = useState(true); // Start muted to avoid autoplay issues
+  const [isMuted, setIsMuted] = useState(true);
   const [showHint, setShowHint] = useState(false);
   const [chessboardAnimate, setChessboardAnimate] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [audioInitialized, setAudioInitialized] = useState(false);
   
+  // Audio instances
   const [audio] = useState(() => {
     const bgMusic = new Audio('https://cdn.pixabay.com/audio/2022/03/10/audio_17b17ca3b2.mp3');
     bgMusic.loop = true;
