@@ -1,8 +1,9 @@
 export function registerServiceWorker() {
-  if ('serviceWorker' in navigator) {
+  if ('serviceWorker' in navigator && import.meta.env.PROD) {
     window.addEventListener('load', () => {
+      const swPath = import.meta.env.BASE_URL + 'sw.js';
       navigator.serviceWorker
-        .register('/codequest/sw.js')
+        .register(swPath)
         .then((registration) => {
           console.log('ServiceWorker registered: ', registration);
           
