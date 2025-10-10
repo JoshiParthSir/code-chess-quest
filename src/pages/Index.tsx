@@ -306,33 +306,6 @@ const Index = () => {
   const moveSoundRef = useRef<HTMLAudioElement | null>(null);
   const levelUpSoundRef = useRef<HTMLAudioElement | null>(null);
   
-  // Initialize audio refs once
-  if (!audioRef.current) {
-    audioRef.current = new Audio('https://cdn.pixabay.com/audio/2022/03/10/audio_17b17ca3b2.mp3');
-    audioRef.current.loop = true;
-    audioRef.current.volume = 0.3;
-  }
-  
-  if (!successSoundRef.current) {
-    successSoundRef.current = new Audio('https://cdn.pixabay.com/audio/2022/03/15/audio_c610232c26.mp3');
-    successSoundRef.current.volume = 0.5;
-  }
-  
-  if (!errorSoundRef.current) {
-    errorSoundRef.current = new Audio('https://cdn.pixabay.com/audio/2022/03/24/audio_a87fb85a27.mp3');
-    errorSoundRef.current.volume = 0.4;
-  }
-  
-  if (!moveSoundRef.current) {
-    moveSoundRef.current = new Audio('https://cdn.pixabay.com/audio/2023/11/16/audio_c1e94b8727.mp3');
-    moveSoundRef.current.volume = 0.3;
-  }
-  
-  if (!levelUpSoundRef.current) {
-    levelUpSoundRef.current = new Audio('https://cdn.pixabay.com/audio/2022/08/02/audio_884fe25c21.mp3');
-    levelUpSoundRef.current.volume = 0.6;
-  }
-  
   const [progress, setProgress] = useState<UserProgress>({
     username: "Knight Errant",
     level: 1,
@@ -342,6 +315,35 @@ const Index = () => {
     badges: [],
     lastVisit: new Date().toISOString().split('T')[0]
   });
+
+  // Initialize audio refs once on mount
+  useEffect(() => {
+    if (!audioRef.current) {
+      audioRef.current = new Audio('https://cdn.pixabay.com/audio/2022/03/10/audio_17b17ca3b2.mp3');
+      audioRef.current.loop = true;
+      audioRef.current.volume = 0.3;
+    }
+    
+    if (!successSoundRef.current) {
+      successSoundRef.current = new Audio('https://cdn.pixabay.com/audio/2022/03/15/audio_c610232c26.mp3');
+      successSoundRef.current.volume = 0.5;
+    }
+    
+    if (!errorSoundRef.current) {
+      errorSoundRef.current = new Audio('https://cdn.pixabay.com/audio/2022/03/24/audio_a87fb85a27.mp3');
+      errorSoundRef.current.volume = 0.4;
+    }
+    
+    if (!moveSoundRef.current) {
+      moveSoundRef.current = new Audio('https://cdn.pixabay.com/audio/2023/11/16/audio_c1e94b8727.mp3');
+      moveSoundRef.current.volume = 0.3;
+    }
+    
+    if (!levelUpSoundRef.current) {
+      levelUpSoundRef.current = new Audio('https://cdn.pixabay.com/audio/2022/08/02/audio_884fe25c21.mp3');
+      levelUpSoundRef.current.volume = 0.6;
+    }
+  }, []);
 
   // Load progress from localStorage
   useEffect(() => {
