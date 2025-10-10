@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
@@ -299,37 +299,39 @@ const Index = () => {
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [audioInitialized, setAudioInitialized] = useState(false);
   
-  // Audio setup - Using useState to persist audio instances across renders
-  const [audio] = useState(() => {
-    const bgMusic = new Audio('https://cdn.pixabay.com/audio/2022/03/10/audio_17b17ca3b2.mp3');
-    bgMusic.loop = true;
-    bgMusic.volume = 0.3;
-    return bgMusic;
-  });
+  // Audio setup - Using useRef to persist audio instances without causing re-renders
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const successSoundRef = useRef<HTMLAudioElement | null>(null);
+  const errorSoundRef = useRef<HTMLAudioElement | null>(null);
+  const moveSoundRef = useRef<HTMLAudioElement | null>(null);
+  const levelUpSoundRef = useRef<HTMLAudioElement | null>(null);
   
-  const [successSound] = useState(() => {
-    const sound = new Audio('https://cdn.pixabay.com/audio/2022/03/15/audio_c610232c26.mp3');
-    sound.volume = 0.5;
-    return sound;
-  });
+  // Initialize audio refs once
+  if (!audioRef.current) {
+    audioRef.current = new Audio('https://cdn.pixabay.com/audio/2022/03/10/audio_17b17ca3b2.mp3');
+    audioRef.current.loop = true;
+    audioRef.current.volume = 0.3;
+  }
   
-  const [errorSound] = useState(() => {
-    const sound = new Audio('https://cdn.pixabay.com/audio/2022/03/24/audio_a87fb85a27.mp3');
-    sound.volume = 0.4;
-    return sound;
-  });
+  if (!successSoundRef.current) {
+    successSoundRef.current = new Audio('https://cdn.pixabay.com/audio/2022/03/15/audio_c610232c26.mp3');
+    successSoundRef.current.volume = 0.5;
+  }
   
-  const [moveSound] = useState(() => {
-    const sound = new Audio('https://cdn.pixabay.com/audio/2023/11/16/audio_c1e94b8727.mp3');
-    sound.volume = 0.3;
-    return sound;
-  });
+  if (!errorSoundRef.current) {
+    errorSoundRef.current = new Audio('https://cdn.pixabay.com/audio/2022/03/24/audio_a87fb85a27.mp3');
+    errorSoundRef.current.volume = 0.4;
+  }
   
-  const [levelUpSound] = useState(() => {
-    const sound = new Audio('https://cdn.pixabay.com/audio/2022/08/02/audio_884fe25c21.mp3');
-    sound.volume = 0.6;
-    return sound;
-  });
+  if (!moveSoundRef.current) {
+    moveSoundRef.current = new Audio('https://cdn.pixabay.com/audio/2023/11/16/audio_c1e94b8727.mp3');
+    moveSoundRef.current.volume = 0.3;
+  }
+  
+  if (!levelUpSoundRef.current) {
+    levelUpSoundRef.current = new Audio('https://cdn.pixabay.com/audio/2022/08/02/audio_884fe25c21.mp3');
+    levelUpSoundRef.current.volume = 0.6;
+  }
   
   const [progress, setProgress] = useState<UserProgress>({
     username: "Knight Errant",
@@ -377,18 +379,18 @@ const Index = () => {
     
     const playAudio = async () => {
       try {
-        if (!isMuted) {
-          audio.currentTime = 0;
-          audio.volume = 0.3;
-          const playPromise = audio.play();
+        if (!isMuted && audioRef.current) {
+          audioRef.current.currentTime = 0;
+          audioRef.current.volume = 0.3;
+          const playPromise = audioRef.current.play();
           
           if (playPromise !== undefined) {
             playPromise
               .then(() => console.log("Music started"))
               .catch(error => console.log("Audio autoplay prevented:", error));
           }
-        } else {
-          audio.pause();
+        } else if (audioRef.current) {
+          audioRef.current.pause();
         }
       } catch (error) {
         console.log("Audio error:", error);
@@ -398,9 +400,11 @@ const Index = () => {
     playAudio();
     
     return () => {
-      audio.pause();
+      if (audioRef.current) {
+        audioRef.current.pause();
+      }
     };
-  }, [isMuted, audioInitialized, audio]);
+  }, [isMuted, audioInitialized]);
 
   const getLevelName = (level: number) => {
     if (level < 5) return "Pawn";
@@ -418,8 +422,8 @@ const Index = () => {
     setCurrentScreen("lesson");
     
     // Play move sound when starting lesson
-    if (!isMuted) {
-      moveSound.play().catch(() => {});
+    if (!isMuted && moveSoundRef.current) {
+      moveSoundRef.current.play().catch(() => {});
     }
   };
 
@@ -500,8 +504,8 @@ const Index = () => {
       setChessboardAnimate(true);
       
       // Play success sound
-      if (!isMuted) {
-        successSound.play().catch(() => {});
+      if (!isMuted && successSoundRef.current) {
+        successSoundRef.current.play().catch(() => {});
       }
       
       toast({
@@ -524,8 +528,8 @@ const Index = () => {
         const newBadges = [...progress.badges];
         
         // Play level up sound if leveled up
-        if (newLevel > oldLevel && !isMuted) {
-          setTimeout(() => levelUpSound.play().catch(() => {}), 500);
+        if (newLevel > oldLevel && !isMuted && levelUpSoundRef.current) {
+          setTimeout(() => levelUpSoundRef.current!.play().catch(() => {}), 500);
         }
         
         // Award badges
@@ -556,8 +560,8 @@ const Index = () => {
       }
     } else {
       // Play error sound
-      if (!isMuted) {
-        errorSound.play().catch(() => {});
+      if (!isMuted && errorSoundRef.current) {
+        errorSoundRef.current.play().catch(() => {});
       }
       
       toast({
@@ -605,7 +609,9 @@ const Index = () => {
               setAudioInitialized(true);
               setIsMuted(false); // Unmute when user clicks
               // Play move sound on start
-              moveSound.play().catch(() => {});
+              if (moveSoundRef.current) {
+                moveSoundRef.current.play().catch(() => {});
+              }
             }}
             size="lg"
             className="mt-6 sm:mt-8 bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-primary-foreground font-bold text-sm sm:text-base lg:text-lg px-6 sm:px-8 py-4 sm:py-6 rounded-xl shadow-lg hover:shadow-xl transition-all hover:scale-105 animate-pulse"
@@ -640,8 +646,8 @@ const Index = () => {
               onClick={() => {
                 const newMutedState = !isMuted;
                 setIsMuted(newMutedState);
-                if (!newMutedState && audioInitialized) {
-                  audio.play().catch(e => console.log("Audio toggle failed:", e));
+                if (!newMutedState && audioInitialized && audioRef.current) {
+                  audioRef.current.play().catch(e => console.log("Audio toggle failed:", e));
                 }
               }}
               className="rounded-full"
@@ -853,8 +859,8 @@ const Index = () => {
                     setShowSuccessModal(false);
                     setCurrentScreen("dashboard");
                     // Play move sound
-                    if (!isMuted) {
-                      moveSound.play().catch(() => {});
+                    if (!isMuted && moveSoundRef.current) {
+                      moveSoundRef.current.play().catch(() => {});
                     }
                   }}
                 >
@@ -866,12 +872,12 @@ const Index = () => {
                   <Button
                     className="flex-1 bg-gradient-to-r from-primary to-secondary hover:from-primary/90 hover:to-secondary/90 animate-pulse"
                     onClick={() => {
-                      setShowSuccessModal(false);
-                      // Play move sound
-                      if (!isMuted) {
-                        moveSound.play().catch(() => {});
-                      }
-                      startLesson(nextLesson);
+                    setShowSuccessModal(false);
+                    // Play move sound
+                    if (!isMuted && moveSoundRef.current) {
+                      moveSoundRef.current.play().catch(() => {});
+                    }
+                    startLesson(nextLesson);
                     }}
                   >
                     Next Quest
