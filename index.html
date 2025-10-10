@@ -29,6 +29,14 @@
 
   <body>
     <div id="root"></div>
-    <script type="module" src="/src/main.tsx?v=2"></script>
+    <script>
+      // Force clear all caches
+      if ('caches' in window) {
+        caches.keys().then(names => {
+          names.forEach(name => caches.delete(name));
+        });
+      }
+    </script>
+    <script type="module" src="/src/main.tsx?cachebust=1760060600"></script>
   </body>
 </html>
