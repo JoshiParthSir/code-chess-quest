@@ -299,22 +299,37 @@ const Index = () => {
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [audioInitialized, setAudioInitialized] = useState(false);
   
-  // Audio setup - Using direct instantiation to avoid useState issues
-  const audio = new Audio('https://cdn.pixabay.com/audio/2022/03/10/audio_17b17ca3b2.mp3');
-  audio.loop = true;
-  audio.volume = 0.3;
+  // Audio setup - Using useState to persist audio instances across renders
+  const [audio] = useState(() => {
+    const bgMusic = new Audio('https://cdn.pixabay.com/audio/2022/03/10/audio_17b17ca3b2.mp3');
+    bgMusic.loop = true;
+    bgMusic.volume = 0.3;
+    return bgMusic;
+  });
   
-  const successSound = new Audio('https://cdn.pixabay.com/audio/2022/03/15/audio_c610232c26.mp3');
-  successSound.volume = 0.5;
+  const [successSound] = useState(() => {
+    const sound = new Audio('https://cdn.pixabay.com/audio/2022/03/15/audio_c610232c26.mp3');
+    sound.volume = 0.5;
+    return sound;
+  });
   
-  const errorSound = new Audio('https://cdn.pixabay.com/audio/2022/03/24/audio_a87fb85a27.mp3');
-  errorSound.volume = 0.4;
+  const [errorSound] = useState(() => {
+    const sound = new Audio('https://cdn.pixabay.com/audio/2022/03/24/audio_a87fb85a27.mp3');
+    sound.volume = 0.4;
+    return sound;
+  });
   
-  const moveSound = new Audio('https://cdn.pixabay.com/audio/2023/11/16/audio_c1e94b8727.mp3');
-  moveSound.volume = 0.3;
+  const [moveSound] = useState(() => {
+    const sound = new Audio('https://cdn.pixabay.com/audio/2023/11/16/audio_c1e94b8727.mp3');
+    sound.volume = 0.3;
+    return sound;
+  });
   
-  const levelUpSound = new Audio('https://cdn.pixabay.com/audio/2022/08/02/audio_884fe25c21.mp3');
-  levelUpSound.volume = 0.6;
+  const [levelUpSound] = useState(() => {
+    const sound = new Audio('https://cdn.pixabay.com/audio/2022/08/02/audio_884fe25c21.mp3');
+    sound.volume = 0.6;
+    return sound;
+  });
   
   const [progress, setProgress] = useState<UserProgress>({
     username: "Knight Errant",
