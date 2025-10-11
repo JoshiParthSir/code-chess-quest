@@ -322,26 +322,32 @@ const Index = () => {
       audioRef.current = new Audio('https://cdn.pixabay.com/audio/2022/03/10/audio_17b17ca3b2.mp3');
       audioRef.current.loop = true;
       audioRef.current.volume = 0.3;
+      audioRef.current.onerror = () => console.error('Failed to load background music');
+      audioRef.current.onloadeddata = () => console.log('Background music loaded successfully');
     }
     
     if (!successSoundRef.current) {
       successSoundRef.current = new Audio('https://cdn.pixabay.com/audio/2022/03/15/audio_c610232c26.mp3');
       successSoundRef.current.volume = 0.5;
+      successSoundRef.current.onerror = () => console.error('Failed to load success sound');
     }
     
     if (!errorSoundRef.current) {
       errorSoundRef.current = new Audio('https://cdn.pixabay.com/audio/2022/03/24/audio_a87fb85a27.mp3');
       errorSoundRef.current.volume = 0.4;
+      errorSoundRef.current.onerror = () => console.error('Failed to load error sound');
     }
     
     if (!moveSoundRef.current) {
       moveSoundRef.current = new Audio('https://cdn.pixabay.com/audio/2023/11/16/audio_c1e94b8727.mp3');
       moveSoundRef.current.volume = 0.3;
+      moveSoundRef.current.onerror = () => console.error('Failed to load move sound');
     }
     
     if (!levelUpSoundRef.current) {
       levelUpSoundRef.current = new Audio('https://cdn.pixabay.com/audio/2022/08/02/audio_884fe25c21.mp3');
       levelUpSoundRef.current.volume = 0.6;
+      levelUpSoundRef.current.onerror = () => console.error('Failed to load level up sound');
     }
   }, []);
 
