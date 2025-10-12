@@ -665,7 +665,7 @@ const Index = () => {
     }
   };
 
-  // Splash Screen
+  // Render splash screen first on initial load
   if (showSplash) {
     return (
       <div className="fixed inset-0 bg-gradient-to-br from-background to-card flex items-center justify-center z-50 animate-fade-in">
@@ -689,9 +689,9 @@ const Index = () => {
           <Button
             onClick={() => {
               setShowSplash(false);
+              setCurrentScreen("dashboard");
               setAudioInitialized(true);
-              setIsMuted(false); // Unmute when user clicks
-              // Play move sound on start
+              setIsMuted(false);
               if (moveSoundRef.current) {
                 moveSoundRef.current.play().catch(() => {});
               }
