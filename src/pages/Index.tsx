@@ -563,6 +563,21 @@ const Index = () => {
       case 20:
         isCorrect = codeCheck.includes("struct piece") && codeCheck.includes("fopen") && codeCheck.includes("movepiece");
         break;
+      case 21:
+        isCorrect = codeCheck.includes("enum") && codeCheck.includes("piecetype");
+        break;
+      case 22:
+        isCorrect = codeCheck.includes("typedef") && (codeCheck.includes("square") || codeCheck.includes("position"));
+        break;
+      case 23:
+        isCorrect = codeCheck.includes("recursion") || (codeCheck.includes("return") && codeCheck.includes("calculatetotalmoves"));
+        break;
+      case 24:
+        isCorrect = codeCheck.includes("#define") && (codeCheck.includes("board_size") || codeCheck.includes("max_rank"));
+        break;
+      case 25:
+        isCorrect = codeCheck.includes("struct") && codeCheck.includes("enum") && codeCheck.includes("typedef");
+        break;
       default:
         isCorrect = false;
     }
@@ -1212,7 +1227,17 @@ const Index = () => {
     );
   }
 
-  return null;
+  // Fallback - should never reach here, but redirect to dashboard if it does
+  return (
+    <div className="min-h-screen flex items-center justify-center">
+      <Button onClick={() => {
+        setShowSplash(true);
+        setCurrentScreen("dashboard");
+      }}>
+        Return to Dashboard
+      </Button>
+    </div>
+  );
 };
 
 export default Index;
