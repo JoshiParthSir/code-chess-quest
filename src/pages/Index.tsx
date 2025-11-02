@@ -425,6 +425,7 @@ const Index = () => {
     if (saved) {
       const loaded = JSON.parse(saved);
       setProgress(loaded);
+      setShowSplash(false); // Hide splash if we have saved progress
       
       // Check streak
       const today = new Date().toISOString().split('T')[0];
