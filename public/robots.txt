@@ -12,3 +12,5 @@ Allow: /
 
 User-agent: *
 Allow: /
+
+Sitemap: https://parthjoshi23.github.io/codequest/sitemap.xml

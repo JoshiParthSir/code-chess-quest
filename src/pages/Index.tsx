@@ -389,25 +389,33 @@ const Index = () => {
     if (!successSoundRef.current) {
       successSoundRef.current = new Audio('https://cdn.pixabay.com/audio/2022/03/15/audio_c610232c26.mp3');
       successSoundRef.current.volume = 0.5;
-      successSoundRef.current.onerror = () => console.error('Failed to load success sound');
+      successSoundRef.current.onerror = () => {
+        if (import.meta.env.DEV) console.error('Failed to load success sound');
+      };
     }
     
     if (!errorSoundRef.current) {
       errorSoundRef.current = new Audio('https://cdn.pixabay.com/audio/2022/03/24/audio_a87fb85a27.mp3');
       errorSoundRef.current.volume = 0.4;
-      errorSoundRef.current.onerror = () => console.error('Failed to load error sound');
+      errorSoundRef.current.onerror = () => {
+        if (import.meta.env.DEV) console.error('Failed to load error sound');
+      };
     }
     
     if (!moveSoundRef.current) {
       moveSoundRef.current = new Audio('https://cdn.pixabay.com/audio/2023/11/16/audio_c1e94b8727.mp3');
       moveSoundRef.current.volume = 0.3;
-      moveSoundRef.current.onerror = () => console.error('Failed to load move sound');
+      moveSoundRef.current.onerror = () => {
+        if (import.meta.env.DEV) console.error('Failed to load move sound');
+      };
     }
     
     if (!levelUpSoundRef.current) {
       levelUpSoundRef.current = new Audio('https://cdn.pixabay.com/audio/2022/08/02/audio_884fe25c21.mp3');
       levelUpSoundRef.current.volume = 0.6;
-      levelUpSoundRef.current.onerror = () => console.error('Failed to load level up sound');
+      levelUpSoundRef.current.onerror = () => {
+        if (import.meta.env.DEV) console.error('Failed to load level up sound');
+      };
     }
   }, []);
 
@@ -454,14 +462,18 @@ const Index = () => {
           
           if (playPromise !== undefined) {
             playPromise
-              .then(() => console.log("Music started"))
-              .catch(error => console.log("Audio autoplay prevented:", error));
+              .then(() => {
+                if (import.meta.env.DEV) console.log("Music started");
+              })
+              .catch(error => {
+                if (import.meta.env.DEV) console.log("Audio autoplay prevented:", error);
+              });
           }
         } else if (audioRef.current) {
           audioRef.current.pause();
         }
       } catch (error) {
-        console.log("Audio error:", error);
+        if (import.meta.env.DEV) console.log("Audio error:", error);
       }
     };
     
@@ -561,22 +573,22 @@ const Index = () => {
         isCorrect = codeCheck.includes("file *") && codeCheck.includes("fopen");
         break;
       case 20:
-        isCorrect = codeCheck.includes("struct piece") && codeCheck.includes("fopen") && codeCheck.includes("movepiece");
+        isCorrect = codeCheck.includes("malloc") && codeCheck.includes("free") && codeCheck.includes("pawns");
         break;
       case 21:
         isCorrect = codeCheck.includes("enum") && codeCheck.includes("piecetype");
         break;
       case 22:
-        isCorrect = codeCheck.includes("typedef") && (codeCheck.includes("square") || codeCheck.includes("position"));
+        isCorrect = codeCheck.includes("typedef") && (codeCheck.includes("coordinate") || codeCheck.includes("position"));
         break;
       case 23:
-        isCorrect = codeCheck.includes("recursion") || (codeCheck.includes("return") && codeCheck.includes("calculatetotalmoves"));
+        isCorrect = codeCheck.includes("factorial") && codeCheck.includes("return") && (codeCheck.includes("factorial(n") || codeCheck.includes("factorial(n-1)"));
         break;
       case 24:
-        isCorrect = codeCheck.includes("#define") && (codeCheck.includes("board_size") || codeCheck.includes("max_rank"));
+        isCorrect = codeCheck.includes("#define") && codeCheck.includes("board_size");
         break;
       case 25:
-        isCorrect = codeCheck.includes("struct") && codeCheck.includes("enum") && codeCheck.includes("typedef");
+        isCorrect = codeCheck.includes("struct piece") && codeCheck.includes("board[") && (codeCheck.includes("movepiece") || codeCheck.includes("file *"));
         break;
       default:
         isCorrect = false;
