@@ -2,20 +2,20 @@
   "name": "LJCCA CodeQuest - Learn C Programming Through Chess",
   "short_name": "CodeQuest",
   "description": "Master C Programming through the Ancient Game of Kings. Learn fundamental C concepts by drawing analogies to chess.",
-  "start_url": "/codequest/",
+  "start_url": "/code-chess-quest/",
   "display": "standalone",
   "background_color": "#0a0a0a",
   "theme_color": "#ffd700",
   "orientation": "portrait-primary",
   "icons": [
     {
-      "src": "/codequest/icon-192.png",
+      "src": "/code-chess-quest/icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "/codequest/icon-512.png",
+      "src": "/code-chess-quest/icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"

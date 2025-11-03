@@ -33,7 +33,7 @@ jobs:
         run: npm run build
         env:
           NODE_ENV: production
-          VITE_BASE_PATH: /codequest/
+          VITE_BASE_PATH: /code-chess-quest/
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
