@@ -50,10 +50,15 @@ const Index = () => {
           </Button>
         </Link>
 
-        {/* Bottom info */}
-        <p className="mt-12 text-sm text-muted-foreground/70 animate-fade-in delay-700">
-          Created by Parth D. Joshi • LJK College Computer Applications
-        </p>
+        {/* Credits Footer */}
+        <div className="mt-16 space-y-2 animate-fade-in delay-700">
+          <p className="text-sm text-muted-foreground/90">
+            <span className="font-semibold">Concept by:</span> Dr. Manish Shah (President, LJK)
+          </p>
+          <p className="text-sm text-muted-foreground/90">
+            <span className="font-semibold">Design, Development and Implementation by:</span> Parth D. Joshi (Assistant Professor, LJCCA)
+          </p>
+        </div>
       </div>
 
       {/* Custom animations */}
