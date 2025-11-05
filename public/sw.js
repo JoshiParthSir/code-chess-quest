@@ -1,8 +1,8 @@
 const CACHE_NAME = 'codequest-v1';
 const urlsToCache = [
-  '/codequest/',
-  '/codequest/index.html',
-  '/codequest/manifest.json'
+  '/code-chess-quest/',
+  '/code-chess-quest/index.html',
+  '/code-chess-quest/manifest.json'
 ];
 
 // Install event - cache resources
