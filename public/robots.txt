@@ -13,4 +13,4 @@ Allow: /
 User-agent: *
 Allow: /
 
-Sitemap: https://parthjoshi23.github.io/codequest/sitemap.xml
+Sitemap: https://JoshiParthSir.github.io/code-chess-quest/sitemap.xml
