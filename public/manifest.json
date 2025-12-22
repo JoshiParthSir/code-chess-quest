@@ -1,12 +1,13 @@
 {
-  "name": "LJCCA CodeQuest - Learn C Programming Through Chess",
-  "short_name": "CodeQuest",
-  "description": "Master C Programming through the Ancient Game of Kings. Learn fundamental C concepts by drawing analogies to chess.",
+  "name": "ChessVerse - Learn C Programming Through Chess",
+  "short_name": "ChessVerse",
+  "description": "Master C Programming through the Ancient Game of Kings. Learn fundamental C concepts by drawing analogies to chess strategies. An immersive, gamified learning experience.",
   "start_url": "/code-chess-quest/",
+  "scope": "/code-chess-quest/",
   "display": "standalone",
   "background_color": "#0a0a0a",
-  "theme_color": "#ffd700",
-  "orientation": "portrait-primary",
+  "theme_color": "#06b6d4",
+  "orientation": "any",
   "icons": [
     {
       "src": "/code-chess-quest/icon-192.png",
@@ -21,19 +22,24 @@
       "purpose": "any maskable"
     }
   ],
-  "categories": ["education", "productivity"],
-  "screenshots": [
+  "categories": ["education", "productivity", "games"],
+  "lang": "en-US",
+  "dir": "ltr",
+  "prefer_related_applications": false,
+  "shortcuts": [
     {
-      "src": "/screenshot-wide.png",
-      "sizes": "1280x720",
-      "type": "image/png",
-      "form_factor": "wide"
+      "name": "Start Learning",
+      "short_name": "Learn",
+      "description": "Jump directly into programming lessons",
+      "url": "/code-chess-quest/learn",
+      "icons": [{ "src": "/code-chess-quest/icon-192.png", "sizes": "192x192" }]
     },
     {
-      "src": "/screenshot-narrow.png",
-      "sizes": "750x1334",
-      "type": "image/png",
-      "form_factor": "narrow"
+      "name": "About ChessVerse",
+      "short_name": "About",
+      "description": "Learn about our mission and vision",
+      "url": "/code-chess-quest/about",
+      "icons": [{ "src": "/code-chess-quest/icon-192.png", "sizes": "192x192" }]
     }
   ]
 }

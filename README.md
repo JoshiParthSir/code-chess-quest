@@ -1,26 +1,28 @@
-# Welcome to your Lovable project
+# ChessVerse Campus - Code Chess Quest
 
-## Project info
+A cyberpunk-themed educational platform that teaches C programming through chess-inspired lessons.
 
-**URL**: https://lovable.dev/projects/e412b185-1ca7-408d-b266-5ea189d9fad3
+## 🚀 Quick Deploy
 
-## How can I edit this code?
+**Ready to deploy? See [DEPLOY-QUICK.md](DEPLOY-QUICK.md) for instant deployment!**
 
-There are several ways of editing your application.
+Supports: **Vercel** | **Netlify** | **Render** (all FREE)
 
-**Use Lovable**
+## ✨ Features
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/e412b185-1ca7-408d-b266-5ea189d9fad3) and start prompting.
+- 🎓 **25 Interactive C Programming Lessons** - Learn through chess analogies
+- ♟️ **Chess Basics Tutorial** - Master all 6 chess pieces
+- 🌍 **Multi-Language** - English & Hindi with voice narration
+- 📱 **PWA Support** - Install to home screen, works offline
+- 🎮 **Gamification** - XP, levels, badges, and streaks
+- 🎨 **Cyberpunk Theme** - Immersive neon aesthetics
+- 📱 **Mobile-First** - Touch-friendly, responsive design
 
-Changes made via Lovable will be committed automatically to this repo.
+## 🛠️ Local Development
 
-**Use your preferred IDE**
+**Requirements**: Node.js 18+ and npm
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
+### Quick Start
 
 ```sh
 # Step 1: Clone the repository using the project's Git URL.
@@ -50,24 +52,94 @@ npm run dev
 - Click on "New codespace" to launch a new Codespace environment.
 - Edit files directly within the Codespace and commit and push your changes once you're done.
 
-## What technologies are used for this project?
+## 💻 Technologies
 
-This project is built with:
+- **Frontend**: React 18 + TypeScript
+- **Build Tool**: Vite 5
+- **UI Framework**: Tailwind CSS + shadcn/ui
+- **PWA**: Service Worker + Web App Manifest
+- **Voice**: Web Speech API
+- **Storage**: LocalStorage for progress tracking
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+## 🚀 Deployment
 
-## How can I deploy this project?
+### Quick Deploy (Recommended)
 
-Simply open [Lovable](https://lovable.dev/projects/e412b185-1ca7-408d-b266-5ea189d9fad3) and click on Share -> Publish.
+**See [DEPLOY-QUICK.md](DEPLOY-QUICK.md) for step-by-step instructions!**
 
-## Can I connect a custom domain to my Lovable project?
+### Platform Options
 
-Yes, you can!
+1. **Vercel** (Recommended - Fastest)
+   ```bash
+   npm i -g vercel
+   vercel
+   ```
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+2. **Netlify**
+   ```bash
+   npm i -g netlify-cli
+   netlify deploy --prod
+   ```
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+3. **Render**
+   - Push to GitHub → Connect on render.com
+
+All platforms:
+- ✅ Auto-configured via config files
+- ✅ FREE forever for this project
+- ✅ Global CDN included
+- ✅ Free SSL certificates
+- ✅ Auto-deploy on git push
+
+### Manual Build
+
+```bash
+npm run build    # Creates dist/ folder
+npm run preview  # Test production build locally
+```
+
+Deploy the `dist/` folder to any static hosting.
+
+## 📱 PWA Features
+
+- ✅ Install to home screen
+- ✅ Offline support
+- ✅ App shortcuts (Learn, About)
+- ✅ Optimized caching strategy
+- ✅ Mobile-first design
+
+## 🎓 Educational Content
+
+### Chess Basics Tutorial
+- Interactive demonstrations for all 6 pieces
+- Unique sound effects per piece
+- Visual move patterns on 3D board
+
+### Programming Lessons
+- 25 lessons covering C fundamentals
+- Each concept paired with chess analogy
+- Interactive code editor
+- Instant feedback and hints
+- Progress tracking with XP/levels
+
+## 🌍 Accessibility
+
+- Multi-language support (EN/HI)
+- Voice narration for all content
+- 44px minimum touch targets (WCAG compliant)
+- Keyboard navigation support
+- Screen reader compatible
+
+## 👥 Team
+
+- **Dr. Manish Shah** - President, Lok Jagruti Kendra Trust
+- **Parth D. Joshi** - Core Developer & Assistant Professor
+
+## 📄 License
+
+This project is part of Lok Jagruti Kendra's educational initiative.
+
+---
+
+**Ready to deploy?** → [DEPLOY-QUICK.md](DEPLOY-QUICK.md)  
+**Detailed deployment guide** → [DEPLOYMENT.md](DEPLOYMENT.md)

@@ -1,8 +1,11 @@
-const CACHE_NAME = 'codequest-v1';
+const CACHE_NAME = 'chessverse-v1.0.0';
 const urlsToCache = [
   '/code-chess-quest/',
   '/code-chess-quest/index.html',
-  '/code-chess-quest/manifest.json'
+  '/code-chess-quest/manifest.json',
+  '/code-chess-quest/favicon.svg',
+  '/code-chess-quest/icon-192.png',
+  '/code-chess-quest/icon-512.png'
 ];
 
 // Install event - cache resources

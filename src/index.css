@@ -8,58 +8,60 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    /* Epic Dark Theme for CodeQuest */
-    --background: 230 35% 7%;
-    --foreground: 0 0% 98%;
+    /* Cyberpunk Neon Theme for CyberChess */
+    --background: 280 90% 5%;
+    --foreground: 180 100% 95%;
 
-    --card: 230 30% 10%;
-    --card-foreground: 0 0% 98%;
+    --card: 280 80% 8%;
+    --card-foreground: 180 100% 95%;
 
-    --popover: 230 30% 10%;
-    --popover-foreground: 0 0% 98%;
+    --popover: 280 80% 8%;
+    --popover-foreground: 180 100% 95%;
 
-    /* Gold - Premium/Achievement colors */
-    --primary: 45 100% 51%;
-    --primary-foreground: 230 35% 7%;
+    /* Cyan - Primary interactive elements */
+    --primary: 180 100% 50%;
+    --primary-foreground: 280 90% 5%;
 
-    /* Electric Blue - Interactive elements */
-    --secondary: 195 100% 50%;
-    --secondary-foreground: 230 35% 7%;
+    /* Pink - Secondary elements */
+    --secondary: 320 100% 60%;
+    --secondary-foreground: 280 90% 5%;
 
-    /* Silver - Secondary elements */
-    --muted: 0 0% 75%;
-    --muted-foreground: 0 0% 45%;
+    /* Muted - Dimmed elements */
+    --muted: 260 20% 30%;
+    --muted-foreground: 260 10% 60%;
 
-    /* Accent - Highlights */
-    --accent: 195 100% 50%;
-    --accent-foreground: 230 35% 7%;
+    /* Purple - Accent highlights */
+    --accent: 270 100% 60%;
+    --accent-foreground: 280 90% 5%;
 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
 
-    --border: 230 20% 18%;
-    --input: 230 20% 18%;
-    --ring: 45 100% 51%;
+    --border: 280 50% 20%;
+    --input: 280 50% 15%;
+    --ring: 180 100% 50%;
 
     --radius: 0.75rem;
 
-    /* Success - Green for correct answers */
-    --success: 142 76% 36%;
-    --success-foreground: 0 0% 98%;
+    /* Success - Cyan for correct answers */
+    --success: 180 100% 50%;
+    --success-foreground: 280 90% 5%;
 
-    /* Chess board colors */
-    --chess-light: 0 0% 90%;
-    --chess-dark: 230 25% 25%;
+    /* Chess board colors - Cyberpunk grid */
+    --chess-light: 280 30% 25%;
+    --chess-dark: 280 60% 15%;
 
-    /* Gradients */
-    --gradient-hero: linear-gradient(135deg, hsl(230 35% 7%), hsl(230 50% 12%));
-    --gradient-gold: linear-gradient(135deg, hsl(45 100% 51%), hsl(38 100% 60%));
-    --gradient-blue: linear-gradient(135deg, hsl(195 100% 50%), hsl(210 100% 60%));
+    /* Cyberpunk Gradients */
+    --gradient-hero: linear-gradient(135deg, hsl(280 90% 5%), hsl(270 80% 10%), hsl(260 70% 15%));
+    --gradient-cyan: linear-gradient(135deg, hsl(180 100% 50%), hsl(190 100% 60%));
+    --gradient-pink: linear-gradient(135deg, hsl(320 100% 60%), hsl(330 100% 70%));
+    --gradient-purple: linear-gradient(135deg, hsl(270 100% 60%), hsl(280 100% 70%));
     
-    /* Shadows & Glows */
-    --shadow-gold: 0 0 20px hsla(45 100% 51% / 0.5);
-    --shadow-blue: 0 0 20px hsla(195 100% 50% / 0.5);
-    --shadow-card: 0 10px 40px hsla(0 0% 0% / 0.5);
+    /* Neon Glows */
+    --shadow-cyan: 0 0 20px hsla(180 100% 50% / 0.6), 0 0 40px hsla(180 100% 50% / 0.3);
+    --shadow-pink: 0 0 20px hsla(320 100% 60% / 0.6), 0 0 40px hsla(320 100% 60% / 0.3);
+    --shadow-purple: 0 0 20px hsla(270 100% 60% / 0.6), 0 0 40px hsla(270 100% 60% / 0.3);
+    --shadow-card: 0 10px 40px hsla(0 0% 0% / 0.8);
   }
 }
 
@@ -70,12 +72,35 @@ All colors MUST be HSL.
 
   body {
     @apply bg-background text-foreground font-sans antialiased;
-    background: linear-gradient(135deg, hsl(230 35% 7%), hsl(230 50% 12%));
+    background: linear-gradient(135deg, hsl(280 90% 5%), hsl(270 80% 10%), hsl(260 70% 15%));
+    /* Prevent pull-to-refresh on mobile */
+    overscroll-behavior-y: contain;
+    /* Improve touch responsiveness */
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
   }
 
-  /* Code editor styling */
+  /* Mobile-friendly touch targets */
+  button, a, [role="button"] {
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* Prevent text selection on mobile for better UX */
+  .touch-none {
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
+  /* Better scrolling on mobile */
+  * {
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Code editor styling - Cyberpunk theme */
   .code-editor {
-    @apply font-mono text-sm bg-[hsl(230_30%_8%)] border border-border rounded-lg p-4;
+    @apply font-mono text-sm bg-[hsl(280_80%_8%)] border border-cyan-500/30 rounded-lg p-4;
+    box-shadow: 0 0 10px hsla(180 100% 50% / 0.2);
   }
 
   /* Enhanced Animations */
@@ -89,10 +114,10 @@ All colors MUST be HSL.
 
   @keyframes pulse-glow {
     0%, 100% { 
-      box-shadow: 0 0 10px hsla(45 100% 51% / 0.5), 0 0 20px hsla(195 100% 50% / 0.3); 
+      box-shadow: 0 0 10px hsla(180 100% 50% / 0.5), 0 0 20px hsla(320 100% 60% / 0.3); 
     }
     50% { 
-      box-shadow: 0 0 30px hsla(45 100% 51% / 0.8), 0 0 40px hsla(195 100% 50% / 0.5); 
+      box-shadow: 0 0 30px hsla(180 100% 50% / 0.8), 0 0 40px hsla(320 100% 60% / 0.6); 
     }
   }
 
@@ -128,6 +153,25 @@ All colors MUST be HSL.
     to { transform: translateY(0); opacity: 1; }
   }
 
+  @keyframes animate-scale-in {
+    0% { 
+      transform: scale(0.9); 
+      box-shadow: 0 0 0px hsla(180 100% 50% / 0);
+    }
+    50% { 
+      transform: scale(1.05); 
+      box-shadow: 0 0 40px hsla(180 100% 50% / 0.8), 0 0 60px hsla(320 100% 60% / 0.6);
+    }
+    100% { 
+      transform: scale(1); 
+      box-shadow: 0 0 30px hsla(180 100% 50% / 0.6), 0 0 50px hsla(320 100% 60% / 0.4);
+    }
+  }
+
+  .animate-scale-in {
+    animation: animate-scale-in 2s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  }
+
   .piece-move {
     animation: piece-move 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
   }
@@ -145,7 +189,7 @@ All colors MUST be HSL.
   }
   
   .shimmer {
-    background: linear-gradient(90deg, transparent, hsla(45 100% 51% / 0.3), transparent);
+    background: linear-gradient(90deg, transparent, hsla(180 100% 50% / 0.4), transparent);
     background-size: 200% 100%;
     animation: shimmer 2s infinite;
   }
@@ -168,9 +212,9 @@ All colors MUST be HSL.
     box-shadow: 0 12px 24px hsla(0 0% 0% / 0.3);
   }
   
-  /* Text gradient animation */
+  /* Text gradient animation - Cyberpunk */
   .text-gradient-animate {
-    background: linear-gradient(90deg, hsl(45 100% 51%), hsl(195 100% 50%), hsl(45 100% 51%));
+    background: linear-gradient(90deg, hsl(180 100% 50%), hsl(320 100% 60%), hsl(270 100% 60%), hsl(180 100% 50%));
     background-size: 200% 100%;
     background-clip: text;
     -webkit-background-clip: text;
@@ -192,10 +236,10 @@ All colors MUST be HSL.
   
   @keyframes glow-pulse {
     0%, 100% { 
-      box-shadow: 0 0 20px hsla(45 100% 51% / 0.4);
+      box-shadow: 0 0 20px hsla(180 100% 50% / 0.5);
     }
     50% { 
-      box-shadow: 0 0 40px hsla(45 100% 51% / 0.8), 0 0 60px hsla(195 100% 50% / 0.6);
+      box-shadow: 0 0 40px hsla(180 100% 50% / 0.8), 0 0 60px hsla(320 100% 60% / 0.6);
     }
   }
   
@@ -209,7 +253,7 @@ All colors MUST be HSL.
     position: fixed;
     width: 10px;
     height: 10px;
-    background: hsl(45 100% 51%);
+    background: hsl(180 100% 50%);
     pointer-events: none;
     z-index: 9999;
   }
@@ -237,6 +281,59 @@ All colors MUST be HSL.
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    @apply bg-primary;
+    @apply bg-cyan-400;
+  }
+}
+
+/* Mobile-specific utilities */
+@layer utilities {
+  /* Touch-friendly minimum sizes */
+  .min-touch {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  /* Prevent text selection on interactive elements */
+  .no-select {
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    user-select: none;
+  }
+
+  /* Better tap highlights */
+  .tap-highlight-none {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* Smooth scrolling for mobile */
+  .smooth-scroll {
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
+  }
+
+  /* Safe area for notched devices */
+  .safe-top {
+    padding-top: env(safe-area-inset-top);
+  }
+
+  .safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  .safe-left {
+    padding-left: env(safe-area-inset-left);
+  }
+
+  .safe-right {
+    padding-right: env(safe-area-inset-right);
+  }
+
+  /* Mobile-friendly text sizes */
+  @media (max-width: 640px) {
+    .text-mobile-xs { font-size: 0.75rem; }
+    .text-mobile-sm { font-size: 0.875rem; }
+    .text-mobile-base { font-size: 1rem; }
+    .text-mobile-lg { font-size: 1.125rem; }
+    .text-mobile-xl { font-size: 1.25rem; }
   }
 }

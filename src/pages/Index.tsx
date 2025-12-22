@@ -1,63 +1,492 @@
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { Crown, Sparkles, Trophy, Code } from "lucide-react";
+import { Crown, Sparkles, Trophy, Code, ChevronRight, Mic, MicOff, Download } from "lucide-react";
 import { Link } from "react-router-dom";
+import { type Language, getTranslation } from "@/lib/translations";
 
 const Index = () => {
+  const [language, setLanguage] = useState<Language>(() => {
+    const saved = localStorage.getItem('chessverse-language');
+    return (saved as Language) || 'en';
+  });
+  const [showStory, setShowStory] = useState(false);
+  const [storyStep, setStoryStep] = useState(0);
+  const [isNarrating, setIsNarrating] = useState(false);
+  const [narrationEnabled, setNarrationEnabled] = useState(true);
+  const [voicesLoaded, setVoicesLoaded] = useState(false);
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [showInstallButton, setShowInstallButton] = useState(false);
+  
+  const t = getTranslation(language);
+  const synth = useRef<SpeechSynthesis | null>(null);
+  const currentUtterance = useRef<SpeechSynthesisUtterance | null>(null);
+
+  // Save language to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem('chessverse-language', language);
+  }, [language]);
+
+  // Initialize speech synthesis and wait for voices to load
+  useEffect(() => {
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+      synth.current = window.speechSynthesis;
+      
+      // Load voices
+      const loadVoices = () => {
+        const voices = synth.current?.getVoices() || [];
+        if (voices.length > 0) {
+          setVoicesLoaded(true);
+          console.log('Voices loaded:', voices.map(v => ({ name: v.name, lang: v.lang })));
+        }
+      };
+      
+      // Load immediately if already available
+      loadVoices();
+      
+      // Listen for voices changed event
+      if (synth.current) {
+        synth.current.addEventListener('voiceschanged', loadVoices);
+      }
+      
+      return () => {
+        if (synth.current) {
+          synth.current.removeEventListener('voiceschanged', loadVoices);
+        }
+      };
+    }
+  }, []);
+
+  // Voice narration function with PRIORITY for Indian female voices
+  const narrateText = (text: string, priority: 'high' | 'normal' = 'normal') => {
+    if (!narrationEnabled || !synth.current || !voicesLoaded) {
+      console.log('Narration skipped:', { narrationEnabled, hasSynth: !!synth.current, voicesLoaded });
+      return;
+    }
+    
+    // Stop any ongoing narration if high priority
+    if (priority === 'high' && synth.current.speaking) {
+      synth.current.cancel();
+    }
+    
+    // Don't interrupt ongoing narration for normal priority
+    if (priority === 'normal' && synth.current.speaking) return;
+    
+    const utterance = new SpeechSynthesisUtterance(text);
+    
+    // Select voice based on current language - PRIORITIZE INDIAN FEMALE/LADY VOICES
+    const voices = synth.current.getVoices();
+    let selectedVoice = null;
+    
+    console.log(`Selecting voice for language: ${language}`);
+    
+    // USE HINDI FEMALE VOICE FOR ALL LANGUAGES
+    // Stage 1: Try Hindi + Female
+    selectedVoice = voices.find(voice => 
+      (voice.lang.includes('hi-IN') || voice.lang.includes('hi')) &&
+      (voice.name.toLowerCase().includes('female') || 
+       voice.name.toLowerCase().includes('woman') || 
+       voice.name.toLowerCase().includes('lady'))
+    );
+    
+    // Stage 2: Try any Hindi voice
+    if (!selectedVoice) {
+      selectedVoice = voices.find(voice => 
+        voice.lang.includes('hi-IN') || voice.lang.includes('hi') || voice.name.toLowerCase().includes('hindi')
+      );
+    }
+    
+    // Stage 3: Fallback to any Indian voice
+    if (!selectedVoice) {
+      selectedVoice = voices.find(voice => 
+        voice.lang.includes('IN') || voice.name.includes('Indian') || voice.name.includes('India')
+      );
+    }
+    
+    // Set language code based on actual content language for proper pronunciation
+    utterance.lang = language === 'hi' ? 'hi-IN' : 'en-IN';
+    
+    // Final fallback: any voice matching the language code
+    if (!selectedVoice) {
+      const langCode = language === 'hi' ? 'hi' : 'en';
+      selectedVoice = voices.find(voice => voice.lang.startsWith(langCode));
+    }
+    
+    // Last resort: first available voice
+    if (!selectedVoice && voices.length > 0) {
+      selectedVoice = voices[0];
+    }
+    
+    if (selectedVoice) {
+      utterance.voice = selectedVoice;
+      console.log('Selected voice:', selectedVoice.name, selectedVoice.lang);
+    }
+    
+    // Adjust speech parameters for clarity
+    utterance.rate = 0.9; // Slightly slower for clarity
+    utterance.pitch = language === 'en' ? 1.1 : 1.0; // Higher pitch for English
+    utterance.volume = 0.8;
+    
+    utterance.onstart = () => {
+      setIsNarrating(true);
+      console.log('Narration started');
+    };
+    utterance.onend = () => {
+      setIsNarrating(false);
+      console.log('Narration ended');
+    };
+    utterance.onerror = (e) => {
+      setIsNarrating(false);
+      console.error('Narration error:', e);
+    };
+    
+    currentUtterance.current = utterance;
+    synth.current.speak(utterance);
+  };
+
+  // Stop narration function
+  const stopNarration = () => {
+    if (synth.current && synth.current.speaking) {
+      synth.current.cancel();
+      setIsNarrating(false);
+    }
+  };
+
+  // Auto-narrate story steps
+  useEffect(() => {
+    if (showStory && voicesLoaded) {
+      const storySteps = [
+        t.narration.storyTitle,
+        t.narration.storyMission,
+        t.narration.missionObjective,
+        t.narration.whyChess,
+        t.narration.whyCoding,
+        t.narration.theConnection,
+      ];
+      
+      setTimeout(() => {
+        narrateText(storySteps[storyStep], 'high');
+      }, 500);
+    }
+  }, [storyStep, showStory, voicesLoaded, language]);
+
+  // PWA Install Prompt
+  useEffect(() => {
+    const handleBeforeInstallPrompt = (e: any) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+      setShowInstallButton(true);
+    };
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    };
+  }, []);
+
+  const handleInstallClick = async () => {
+    if (!deferredPrompt) return;
+
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    
+    if (outcome === 'accepted') {
+      console.log('PWA installed');
+    }
+    
+    setDeferredPrompt(null);
+    setShowInstallButton(false);
+  };
+
+  // Story Introduction Screen - Animated mission briefing
+  if (showStory) {
+    const storySteps = [
+      { icon: "🎯", text: t.narration.storyTitle, narration: t.narration.storyTitle },
+      { icon: "📖", text: t.narration.storyMission, narration: t.narration.storyMission },
+      { icon: "🎮", text: t.narration.missionObjective, narration: t.narration.missionObjective },
+      { icon: "♟️", text: t.narration.whyChess, narration: t.narration.whyChess },
+      { icon: "💻", text: t.narration.whyCoding, narration: t.narration.whyCoding },
+      { icon: "⚡", text: t.narration.theConnection, narration: t.narration.theConnection },
+    ];
+
+    const currentStoryStep = storySteps[storyStep];
+
+    return (
+      <div className="fixed inset-0 bg-gradient-to-br from-black via-purple-950 to-cyan-950 flex items-center justify-center z-50 overflow-hidden">
+        {/* Language Selector - Top Left */}
+        <div className="absolute top-4 left-4 z-20">
+          <div className="flex gap-2 bg-black/50 backdrop-blur-sm p-2 rounded-lg border border-cyan-500/30">
+            <Button
+              variant={language === 'en' ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => setLanguage('en')}
+              className={`min-h-[44px] min-w-[44px] touch-manipulation ${language === 'en' ? 'bg-cyan-500 text-black font-bold' : 'text-cyan-400 hover:bg-cyan-500/20'}`}
+            >
+              EN
+            </Button>
+            <Button
+              variant={language === 'hi' ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => setLanguage('hi')}
+              className={`min-h-[44px] min-w-[44px] touch-manipulation ${language === 'hi' ? 'bg-cyan-500 text-black font-bold' : 'text-cyan-400 hover:bg-cyan-500/20'}`}
+            >
+              हिं
+            </Button>
+          </div>
+        </div>
+
+        {/* Narration Toggle - Top Right */}
+        <div className="absolute top-4 right-4 z-20">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              setNarrationEnabled(!narrationEnabled);
+              if (narrationEnabled) {
+                stopNarration();
+              }
+            }}
+            className="border border-cyan-500/30 bg-black/50 backdrop-blur-sm text-cyan-400 hover:bg-cyan-500/10 min-h-[44px] min-w-[44px] touch-manipulation"
+          >
+            {narrationEnabled ? <Mic className="w-5 h-5" /> : <MicOff className="w-5 h-5" />}
+          </Button>
+        </div>
+
+        {/* Animated Background Elements */}
+        <div className="absolute inset-0 overflow-hidden">
+          <div className="absolute top-20 left-20 w-64 h-64 bg-cyan-500/10 rounded-full blur-3xl animate-pulse" style={{animationDuration: '3s'}}></div>
+          <div className="absolute bottom-20 right-20 w-80 h-80 bg-pink-500/10 rounded-full blur-3xl animate-pulse" style={{animationDuration: '4s', animationDelay: '1s'}}></div>
+          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-purple-500/5 rounded-full blur-3xl animate-pulse" style={{animationDuration: '5s', animationDelay: '2s'}}></div>
+        </div>
+
+        {/* Floating Chess Pieces Animation */}
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute top-10 left-10 text-4xl opacity-20 animate-float">♔</div>
+          <div className="absolute top-20 right-20 text-5xl opacity-15 animate-float" style={{animationDelay: '1s'}}>♕</div>
+          <div className="absolute bottom-20 left-20 text-3xl opacity-10 animate-float" style={{animationDelay: '2s'}}>♞</div>
+          <div className="absolute bottom-10 right-10 text-4xl opacity-20 animate-float" style={{animationDelay: '1.5s'}}>♟</div>
+          <div className="absolute top-1/3 left-1/4 text-6xl opacity-10 animate-float" style={{animationDelay: '0.5s'}}>{ "{}" }</div>
+          <div className="absolute top-2/3 right-1/4 text-5xl opacity-15 animate-float" style={{animationDelay: '2.5s'}}>{ "</>" }</div>
+        </div>
+
+        {/* Main Content */}
+        <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6">
+          <div className="bg-black/50 backdrop-blur-xl border-2 border-cyan-500/30 rounded-2xl p-4 sm:p-6 md:p-10 shadow-2xl shadow-cyan-500/20">
+            {/* Story Icon */}
+            <div className="text-center mb-4 sm:mb-6 animate-scale-in">
+              <div className="text-6xl sm:text-8xl md:text-9xl mb-4 inline-block animate-float">
+                {currentStoryStep.icon}
+              </div>
+            </div>
+
+            {/* Story Text */}
+            <div className="space-y-4 sm:space-y-6">
+              <h2 className="text-xl sm:text-2xl md:text-4xl lg:text-5xl font-bold text-center font-mono text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-pink-400 to-purple-400 animate-fade-in leading-tight px-2">
+                {storyStep === 0 ? currentStoryStep.text : ""}
+              </h2>
+              
+              {storyStep > 0 && (
+                <p className="text-sm sm:text-base md:text-lg lg:text-xl text-cyan-100 leading-relaxed text-center animate-fade-in font-mono px-2">
+                  {currentStoryStep.text}
+                </p>
+              )}
+
+              {/* Progress Dots */}
+              <div className="flex justify-center gap-2 pt-4">
+                {storySteps.map((_, idx) => (
+                  <div
+                    key={idx}
+                    className={`h-2 rounded-full transition-all duration-300 ${
+                      idx === storyStep 
+                        ? "w-8 bg-cyan-400" 
+                        : idx < storyStep 
+                          ? "w-2 bg-pink-400" 
+                          : "w-2 bg-gray-600"
+                    }`}
+                  />
+                ))}
+              </div>
+
+              {/* Navigation Buttons */}
+              <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center pt-4 sm:pt-6 px-2">
+                {storyStep < storySteps.length - 1 ? (
+                  <>
+                    <Link to="/learn" className="w-full sm:w-auto">
+                      <Button
+                        variant="outline"
+                        onClick={() => stopNarration()}
+                        className="w-full sm:w-auto border-gray-500/50 text-gray-400 hover:bg-gray-500/10 min-h-[48px] touch-manipulation"
+                      >
+                        {t.skipStory}
+                      </Button>
+                    </Link>
+                    <Button
+                      onClick={() => {
+                        setStoryStep(storyStep + 1);
+                      }}
+                      className="w-full sm:w-auto bg-gradient-to-r from-cyan-500 to-pink-500 hover:from-cyan-400 hover:to-pink-400 text-black font-bold min-h-[48px] touch-manipulation"
+                    >
+                      <ChevronRight className="mr-1 w-5 h-5" />
+                      {t.continue}
+                    </Button>
+                  </>
+                ) : (
+                  <Link to="/learn" className="w-full sm:w-auto">
+                    <Button
+                      onClick={() => stopNarration()}
+                      className="w-full sm:w-auto bg-gradient-to-r from-cyan-500 via-purple-500 to-pink-500 hover:from-cyan-400 hover:via-purple-400 hover:to-pink-400 text-black font-bold px-6 sm:px-8 py-6 text-base sm:text-lg min-h-[56px] touch-manipulation"
+                    >
+                      <Trophy className="mr-2 w-6 h-6" />
+                      {t.beginQuest}
+                    </Button>
+                  </Link>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Animation Styles */}
+        <style>{`
+          @keyframes float {
+            0%, 100% {
+              transform: translateY(0px);
+            }
+            50% {
+              transform: translateY(-20px);
+            }
+          }
+          
+          @keyframes scale-in {
+            from {
+              transform: scale(0);
+              opacity: 0;
+            }
+            to {
+              transform: scale(1);
+              opacity: 1;
+            }
+          }
+          
+          .animate-float {
+            animation: float 3s ease-in-out infinite;
+          }
+          
+          .animate-scale-in {
+            animation: scale-in 0.5s ease-out forwards;
+          }
+        `}</style>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-primary/5 relative overflow-hidden">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-black via-purple-950 to-cyan-950 relative overflow-hidden">
+      {/* Language Selector - Top Right */}
+      <div className="absolute top-4 right-4 z-20 flex flex-col sm:flex-row gap-2">
+        {showInstallButton && (
+          <Button
+            onClick={handleInstallClick}
+            size="sm"
+            className="bg-gradient-to-r from-cyan-500 to-purple-500 hover:from-cyan-400 hover:to-purple-400 text-black font-bold min-h-[44px] touch-manipulation"
+          >
+            <Download className="w-4 h-4 sm:mr-1" />
+            <span className="hidden sm:inline">{language === 'en' ? 'Install' : 'इंस्टॉल'}</span>
+          </Button>
+        )}
+        <div className="flex gap-2 bg-black/50 backdrop-blur-sm p-2 rounded-lg border border-cyan-500/30">
+          <Button
+            variant={language === 'en' ? 'default' : 'ghost'}
+            size="sm"
+            onClick={() => setLanguage('en')}
+            className={`min-h-[44px] min-w-[44px] touch-manipulation ${language === 'en' ? 'bg-cyan-500 text-black font-bold' : 'text-cyan-400 hover:bg-cyan-500/20'}`}
+          >
+            EN
+          </Button>
+          <Button
+            variant={language === 'hi' ? 'default' : 'ghost'}
+            size="sm"
+            onClick={() => setLanguage('hi')}
+            className={`min-h-[44px] min-w-[44px] touch-manipulation ${language === 'hi' ? 'bg-cyan-500 text-black font-bold' : 'text-cyan-400 hover:bg-cyan-500/20'}`}
+          >
+            हिं
+          </Button>
+        </div>
+      </div>
+
       {/* Animated background elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-20 left-10 w-72 h-72 bg-primary/10 rounded-full blur-3xl animate-pulse" />
-        <div className="absolute bottom-20 right-10 w-96 h-96 bg-primary/5 rounded-full blur-3xl animate-pulse delay-1000" />
+        <div className="absolute top-20 left-10 w-72 h-72 bg-cyan-500/20 rounded-full blur-3xl animate-pulse" />
+        <div className="absolute bottom-20 right-10 w-96 h-96 bg-pink-500/20 rounded-full blur-3xl animate-pulse delay-1000" />
+        <div className="absolute top-1/2 left-1/2 w-64 h-64 bg-purple-500/20 rounded-full blur-3xl animate-pulse" />
       </div>
 
       {/* Main content */}
       <div className="relative z-10 text-center px-4 max-w-4xl mx-auto">
         {/* Icon group */}
-        <div className="flex justify-center items-center gap-4 mb-8 animate-fade-in">
-          <Crown className="w-16 h-16 text-primary animate-bounce" />
-          <Code className="w-20 h-20 text-primary" />
-          <Trophy className="w-16 h-16 text-primary animate-bounce delay-500" />
+        <div className="flex justify-center items-center gap-3 sm:gap-4 mb-6 sm:mb-8 animate-fade-in">
+          <Crown className="w-12 h-12 sm:w-16 sm:h-16 text-primary animate-bounce" />
+          <Code className="w-14 h-14 sm:w-20 sm:h-20 text-primary" />
+          <Trophy className="w-12 h-12 sm:w-16 sm:h-16 text-primary animate-bounce delay-500" />
         </div>
 
         {/* Title */}
-        <h1 className="text-5xl md:text-7xl font-bold mb-4 bg-gradient-to-r from-primary via-primary/80 to-primary bg-clip-text text-transparent animate-fade-in">
-          LJCCA CodeQuest
+        <h1 className="text-4xl sm:text-5xl md:text-7xl font-bold mb-3 sm:mb-4 bg-gradient-to-r from-cyan-400 via-purple-500 to-pink-500 bg-clip-text text-transparent animate-fade-in leading-tight">
+          {t.appTitle}
         </h1>
 
         {/* Subtitle */}
-        <p className="text-xl md:text-2xl text-muted-foreground mb-3 animate-fade-in delay-200">
-          Master C Programming Through Chess
+        <p className="text-lg sm:text-xl md:text-2xl text-cyan-300/90 mb-2 sm:mb-3 animate-fade-in delay-200 font-mono px-2">
+          <span className="text-pink-400">{language === 'en' ? 'NEURAL' : 'न्यूरल'}</span> C Programming <span className="text-purple-400">{language === 'en' ? 'MAINFRAME' : 'मेनफ्रेम'}</span>
         </p>
 
         {/* Epic tagline */}
-        <div className="flex items-center justify-center gap-2 mb-12 animate-fade-in delay-300">
-          <Sparkles className="w-5 h-5 text-primary" />
-          <p className="text-lg text-muted-foreground italic">
-            Learn the Ancient Game of Kings while Conquering Code
+        <div className="flex items-center justify-center gap-2 mb-8 sm:mb-12 animate-fade-in delay-300 px-2">
+          <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 text-cyan-400" />
+          <p className="text-sm sm:text-base md:text-lg text-purple-300/90 italic font-mono">
+            {language === 'en' ? (
+              <>
+                <span className="text-pink-400">JACK IN.</span> Code the Matrix. <span className="text-cyan-400">DOMINATE THE GRID.</span>
+              </>
+            ) : (
+              <>
+                <span className="text-pink-400">शुरू करें।</span> कोड करें मैट्रिक्स। <span className="text-cyan-400">ग्रिड पर राज करें।</span>
+              </>
+            )}
           </p>
-          <Sparkles className="w-5 h-5 text-primary" />
+          <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 text-cyan-400" />
         </div>
 
         {/* CTA Button */}
-        <Link to="/learn">
-          <Button 
-            size="lg" 
-            className="text-xl px-12 py-8 rounded-xl shadow-2xl hover:shadow-primary/50 transition-all duration-300 hover:scale-105 animate-fade-in delay-500 group"
-          >
-            Start Your Quest
-            <Crown className="ml-3 w-6 h-6 group-hover:rotate-12 transition-transform" />
-          </Button>
-        </Link>
+        <Button 
+          onClick={() => {
+            setShowStory(true);
+            setStoryStep(0);
+          }}
+          size="lg" 
+          className="w-full sm:w-auto text-lg sm:text-xl px-8 sm:px-12 py-6 sm:py-8 rounded-xl shadow-2xl bg-gradient-to-r from-cyan-500 via-purple-500 to-pink-500 hover:from-cyan-400 hover:via-purple-400 hover:to-pink-400 border-2 border-cyan-400/50 shadow-cyan-500/50 hover:shadow-pink-500/50 transition-all duration-300 hover:scale-105 animate-fade-in delay-500 group font-mono min-h-[56px] touch-manipulation"
+        >
+          <span className="text-black font-bold">
+            {language === 'en' ? 'INITIALIZE PROTOCOL' : 'प्रोटोकॉल शुरू करें'}
+          </span>
+          <Crown className="ml-3 w-6 h-6 group-hover:rotate-12 transition-transform text-black" />
+        </Button>
 
         {/* Credits Footer */}
-        <div className="mt-16 space-y-2 animate-fade-in delay-700">
-          <p className="text-sm text-muted-foreground/90">
-            <span className="font-semibold">Concept by:</span> Dr. Manish Shah (President, LJK)
+        <div className="mt-12 sm:mt-16 space-y-2 animate-fade-in delay-700 font-mono px-4">
+          <p className="text-xs sm:text-sm text-cyan-400/90">
+            <span className="font-semibold text-pink-400">{t.systemArchitect}</span> Dr. Manish Shah {t.president}
           </p>
-          <p className="text-sm text-muted-foreground/90">
-            <span className="font-semibold">Design, Development and Implementation by:</span> Parth D. Joshi (Assistant Professor, LJCCA)
+          <p className="text-xs sm:text-sm text-cyan-400/90">
+            <span className="font-semibold text-pink-400">{t.coreDeveloper}</span> Parth D. Joshi {t.assistantProfessor}
           </p>
+          <div className="flex justify-center gap-4 mt-4">
+            <Link to="/about">
+              <Button variant="link" className="text-cyan-400 hover:text-cyan-300 min-h-[44px] touch-manipulation">
+                {language === 'en' ? 'About' : 'के बारे में'}
+              </Button>
+            </Link>
+          </div>
         </div>
       </div>
 
