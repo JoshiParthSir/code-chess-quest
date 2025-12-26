@@ -291,10 +291,10 @@ const Index = () => {
         {showInstallButton && (
           <Button
             onClick={handleInstallClick}
-            className="absolute top-4 left-4 z-10 bg-gradient-to-r from-purple-600 to-cyan-600 hover:from-purple-700 hover:to-cyan-700"
+            className="absolute top-4 left-4 z-10 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white shadow-lg"
             size="sm"
           >
-            📱 {t.install}
+            📱 {language === 'hi' ? 'इंस्टॉल' : 'Install'}
           </Button>
         )}
 
@@ -380,6 +380,18 @@ const Index = () => {
                   📖 {language === 'hi' ? 'और जानें' : 'Learn More'}
                 </Button>
               </div>
+
+              {/* PWA Install Button - Mobile Prominent */}
+              {showInstallButton && (
+                <div className="pt-4">
+                  <Button
+                    onClick={handleInstallClick}
+                    className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-bold py-6 text-lg shadow-lg shadow-green-500/50"
+                  >
+                    📱 {language === 'hi' ? 'ऐप इंस्टॉल करें' : 'Install App'}
+                  </Button>
+                </div>
+              )}
 
               {/* Credits Section */}
               <div className="pt-4 border-t border-cyan-500/30">
