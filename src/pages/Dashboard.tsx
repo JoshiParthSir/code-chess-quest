@@ -1204,13 +1204,13 @@ const Index = () => {
 
   // Floating Language Selector with Narration Control (visible on all screens except splash)
   const LanguageSelector = () => (
-    <div className="fixed top-2 right-2 sm:top-4 sm:right-4 z-50 max-w-[calc(100vw-1rem)]">
-      <div className="flex gap-1 sm:gap-2 bg-black/70 backdrop-blur-md p-1.5 sm:p-2 rounded-lg border border-cyan-500/30 shadow-lg shadow-cyan-500/20">
+    <div className="fixed top-1 right-1 xs:top-2 xs:right-2 sm:top-4 sm:right-4 z-50 max-w-[calc(100vw-0.5rem)]">
+      <div className="flex gap-0.5 sm:gap-2 bg-black/70 backdrop-blur-md p-1 sm:p-2 rounded-lg border border-cyan-500/30 shadow-lg shadow-cyan-500/20 overflow-x-auto">
         <Button
           variant={language === 'en' ? 'default' : 'ghost'}
           size="sm"
           onClick={() => setLanguage('en')}
-          className={`text-xs sm:text-sm px-2 sm:px-3 ${language === 'en' ? 'bg-cyan-500 text-black font-bold' : 'text-cyan-400 hover:text-cyan-300'}`}
+          className={`text-xs sm:text-sm px-1.5 sm:px-3 py-1 sm:py-2 whitespace-nowrap flex-shrink-0 ${language === 'en' ? 'bg-cyan-500 text-black font-bold' : 'text-cyan-400 hover:text-cyan-300'}`}
         >
           EN
         </Button>
@@ -1218,11 +1218,11 @@ const Index = () => {
           variant={language === 'hi' ? 'default' : 'ghost'}
           size="sm"
           onClick={() => setLanguage('hi')}
-          className={`text-xs sm:text-sm px-2 sm:px-3 ${language === 'hi' ? 'bg-cyan-500 text-black font-bold' : 'text-cyan-400 hover:text-cyan-300'}`}
+          className={`text-xs sm:text-sm px-1.5 sm:px-3 py-1 sm:py-2 whitespace-nowrap flex-shrink-0 ${language === 'hi' ? 'bg-cyan-500 text-black font-bold' : 'text-cyan-400 hover:text-cyan-300'}`}
         >
           हिं
         </Button>
-        <div className="w-px bg-cyan-500/30" />
+        <div className="w-px bg-cyan-500/30 flex-shrink-0" />
         <Button
           variant="ghost"
           size="sm"
@@ -1232,7 +1232,7 @@ const Index = () => {
               stopNarration();
             }
           }}
-          className={`text-base sm:text-lg px-1.5 sm:px-2 ${narrationEnabled ? 'text-pink-400 hover:text-pink-300' : 'text-gray-500 hover:text-gray-400'}`}
+          className={`text-sm sm:text-lg px-1 sm:px-2 py-1 sm:py-2 whitespace-nowrap flex-shrink-0 ${narrationEnabled ? 'text-pink-400 hover:text-pink-300' : 'text-gray-500 hover:text-gray-400'}`}
           title={narrationEnabled ? 'Disable Voice Narration' : 'Enable Voice Narration'}
         >
           {isNarrating ? '🔊' : narrationEnabled ? '🎙️' : '🔇'}
@@ -1245,7 +1245,6 @@ const Index = () => {
   if (currentScreen === "choose-path") {
     return (
       <div className="fixed inset-0 bg-gradient-to-br from-black via-purple-950 to-cyan-950 flex items-center justify-center z-50 animate-fade-in">
-        <LanguageSelector />
         <LanguageSelector />
         <div className="max-w-6xl mx-auto px-4 sm:px-6 space-y-8 sm:space-y-12">
           <div className="text-center space-y-4 sm:space-y-6">
