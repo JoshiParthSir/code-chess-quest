@@ -10,6 +10,7 @@ import {
   Play, Volume2, VolumeX, ChevronRight, Sparkles, PartyPopper, ArrowRight, ArrowLeft, Home, Languages
 } from "lucide-react";
 import { type Language, getTranslation } from "@/lib/translations";
+import html2canvas from "html2canvas";
 
 // Types
 interface UserProgress {
@@ -509,11 +510,13 @@ const Index = () => {
   const [showHint, setShowHint] = useState(false);
   const [chessboardAnimate, setChessboardAnimate] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [showCertificate, setShowCertificate] = useState(false);
   const [audioInitialized, setAudioInitialized] = useState(false);
   const [highlightSquares, setHighlightSquares] = useState<string[]>([]);
   const [showChessBasicsFirst, setShowChessBasicsFirst] = useState(true);
   const [isNarrating, setIsNarrating] = useState(false);
   const [narrationEnabled, setNarrationEnabled] = useState(true);
+  const [voicesLoaded, setVoicesLoaded] = useState(false);
   const [storyStep, setStoryStep] = useState(0);
   const [language, setLanguage] = useState<Language>(() => {
     const saved = localStorage.getItem('chessverse-language');
@@ -529,16 +532,42 @@ const Index = () => {
     localStorage.setItem('chessverse-language', language);
   }, [language]);
 
-  // Initialize speech synthesis
+  // Initialize speech synthesis and wait for voices to load
   useEffect(() => {
     if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
       synth.current = window.speechSynthesis;
+      
+      // Load voices
+      const loadVoices = () => {
+        const voices = synth.current?.getVoices() || [];
+        if (voices.length > 0) {
+          setVoicesLoaded(true);
+          console.log('Voices loaded:', voices.map(v => ({ name: v.name, lang: v.lang })));
+        }
+      };
+      
+      // Load immediately if already available
+      loadVoices();
+      
+      // Listen for voices changed event
+      if (synth.current) {
+        synth.current.addEventListener('voiceschanged', loadVoices);
+      }
+      
+      return () => {
+        if (synth.current) {
+          synth.current.removeEventListener('voiceschanged', loadVoices);
+        }
+      };
     }
   }, []);
 
   // Voice narration function with multi-language support
   const narrateText = (text: string, priority: 'high' | 'normal' = 'normal') => {
-    if (!narrationEnabled || !synth.current) return;
+    if (!narrationEnabled || !synth.current || !voicesLoaded) {
+      console.log('Narration skipped:', { narrationEnabled, hasSynth: !!synth.current, voicesLoaded });
+      return;
+    }
     
     // Stop any ongoing narration if high priority
     if (priority === 'high' && synth.current.speaking) {
@@ -631,16 +660,33 @@ const Index = () => {
   const queenSoundRef = useRef<HTMLAudioElement | null>(null);
   const kingSoundRef = useRef<HTMLAudioElement | null>(null);
   
-  const [progress, setProgress] = useState<UserProgress>({
-    username: "Knight Errant",
-    level: 1,
-    xp: 0,
-    streak: 0,
-    completedLessons: [],
-    badges: [],
-    lastVisit: new Date().toISOString().split('T')[0],
-    chessBasicsCompleted: false
+  const [progress, setProgress] = useState<UserProgress>(() => {
+    const saved = localStorage.getItem('chessverse-progress');
+    const playerName = localStorage.getItem('chessverse-player-name') || 'Knight Errant';
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        return { ...parsed, username: playerName };
+      } catch (e) {
+        console.error('Failed to parse progress:', e);
+      }
+    }
+    return {
+      username: playerName,
+      level: 1,
+      xp: 0,
+      streak: 0,
+      completedLessons: [],
+      badges: [],
+      lastVisit: new Date().toISOString().split('T')[0],
+      chessBasicsCompleted: false
+    };
   });
+
+  // Save progress to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem('chessverse-progress', JSON.stringify(progress));
+  }, [progress]);
 
   // Initialize audio refs once on mount
   useEffect(() => {
@@ -732,16 +778,16 @@ const Index = () => {
 
   // Auto-narrate chess piece when it changes
   useEffect(() => {
-    if (currentScreen === 'chess-basics' && chessBasicsPieces[currentPieceIndex]) {
+    if (currentScreen === 'chess-basics' && chessBasicsPieces[currentPieceIndex] && voicesLoaded) {
       const piece = chessBasicsPieces[currentPieceIndex];
       const welcomeText = t.narration.pieceWelcome(piece.name, piece.description);
       setTimeout(() => narrateText(welcomeText, 'normal'), 500);
     }
-  }, [currentPieceIndex, currentScreen]);
+  }, [currentPieceIndex, currentScreen, voicesLoaded]);
 
   // Auto-narrate story steps
   useEffect(() => {
-    if (showStory && storyStep > 0) {
+    if (showStory && storyStep > 0 && voicesLoaded) {
       const storySteps = [
         { text: t.narration.storyTitle },
         { text: t.narration.storyMission },
@@ -754,7 +800,7 @@ const Index = () => {
         setTimeout(() => narrateText(storySteps[storyStep].text, 'high'), 300);
       }
     }
-  }, [storyStep, showStory]);
+  }, [storyStep, showStory, voicesLoaded]);
         // Consecutive day, increment streak
         setProgress(prev => ({ ...prev, streak: prev.streak + 1, lastVisit: today }));
       } else {
@@ -885,7 +931,7 @@ const Index = () => {
         isCorrect = codeCheck.includes("#define") && codeCheck.includes("board_size");
         break;
       case 25:
-        isCorrect = codeCheck.includes("struct piece") && codeCheck.includes("board[") && (codeCheck.includes("movepiece") || codeCheck.includes("file *"));
+        isCorrect = codeCheck.includes("struct piece") && codeCheck.includes("movepiece") && codeCheck.includes("fopen");
         break;
       default:
         isCorrect = false;
@@ -913,6 +959,13 @@ const Index = () => {
       setTimeout(() => {
         setChessboardAnimate(false);
         setShowSuccessModal(true);
+        
+        // Play additional celebration sound when modal opens
+        if (!isMuted && levelUpSoundRef.current) {
+          levelUpSoundRef.current.currentTime = 0;
+          levelUpSoundRef.current.volume = 0.5;
+          levelUpSoundRef.current.play().catch((e) => console.log("Celebration sound error:", e));
+        }
       }, 2000);
       
       // Update progress if first time completing
@@ -947,6 +1000,14 @@ const Index = () => {
         if (newCompleted.length >= 5 && !newBadges.includes("code-warrior")) {
           newBadges.push("code-warrior");
           toast({ title: "🏆 Badge Unlocked!", description: "Code Warrior" });
+        }
+        
+        // Check if all 25 lessons completed - Show Certificate
+        if (newCompleted.length === 25 && !newBadges.includes("grandmaster")) {
+          newBadges.push("grandmaster");
+          setTimeout(() => {
+            setShowCertificate(true);
+          }, 3000); // Show certificate after success modal
         }
         
         setProgress(prev => ({
@@ -1256,7 +1317,7 @@ const Index = () => {
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 gap-6 lg:gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 lg:gap-8">
             {/* Learn Chess Basics */}
             <Card className="border-cyan-500/30 bg-gradient-to-br from-black/50 to-cyan-950/30 shadow-2xl hover:shadow-cyan-500/30 transition-all duration-300 hover:scale-105 cursor-pointer group"
               onClick={() => {
@@ -1275,23 +1336,23 @@ const Index = () => {
                 }
               }}
             >
-              <CardHeader className="p-6 sm:p-8">
-                <div className="text-center space-y-4">
-                  <div className="text-6xl sm:text-7xl lg:text-8xl animate-float">
+              <CardHeader className="p-4 sm:p-6 md:p-8">
+                <div className="text-center space-y-3 sm:space-y-4">
+                  <div className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl animate-float">
                     ♞
                   </div>
-                  <CardTitle className="text-2xl sm:text-3xl lg:text-4xl font-mono text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-pink-400">
+                  <CardTitle className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-mono text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-pink-400">
                     {t.learnChessBasics}
                   </CardTitle>
                 </div>
               </CardHeader>
-              <CardContent className="p-6 sm:p-8 pt-0 space-y-4">
-                <p className="text-sm sm:text-base text-cyan-100/90 text-center">
+              <CardContent className="p-4 sm:p-6 md:p-8 pt-0 space-y-3 sm:space-y-4">
+                <p className="text-xs sm:text-sm md:text-base text-cyan-100/90 text-center leading-relaxed">
                   {language === 'en' ? "Master all 6 chess pieces with interactive 3D demonstrations and unique sounds for each piece." : "इंटरैक्टिव 3D प्रदर्शन और प्रत्येक मोहरे के लिए अनूठी ध्वनि के साथ सभी 6 शतरंज मोहरों में महारत हासिल करें।"}
                 </p>
-                <div className="bg-cyan-500/10 border border-cyan-500/30 rounded-lg p-4">
-                  <h3 className="font-bold text-sm sm:text-base mb-2 text-cyan-400 font-mono">{t.whatYouLearn}</h3>
-                  <ul className="space-y-2 text-xs sm:text-sm text-cyan-100/80">
+                <div className="bg-cyan-500/10 border border-cyan-500/30 rounded-lg p-3 sm:p-4">
+                  <h3 className="font-bold text-xs sm:text-sm md:text-base mb-2 text-cyan-400 font-mono">{t.whatYouLearn}</h3>
+                  <ul className="space-y-1.5 sm:space-y-2 text-[10px] sm:text-xs md:text-sm text-cyan-100/80">
                     <li className="flex items-start gap-2">
                       <span className="text-pink-400">♟</span>
                       <span>{t.pawnKnightBishop}</span>
@@ -1310,8 +1371,8 @@ const Index = () => {
                     </li>
                   </ul>
                 </div>
-                <Button className="w-full bg-gradient-to-r from-cyan-500 to-pink-500 hover:from-cyan-400 hover:to-pink-400 text-black font-bold text-base sm:text-lg py-6 font-mono group-hover:scale-105 transition-transform">
-                  <Crown className="mr-2 w-5 h-5" />
+                <Button className="w-full bg-gradient-to-r from-cyan-500 to-pink-500 hover:from-cyan-400 hover:to-pink-400 text-black font-bold text-sm sm:text-base md:text-lg py-4 sm:py-5 md:py-6 font-mono group-hover:scale-105 transition-transform">
+                  <Crown className="mr-1 sm:mr-2 w-4 h-4 sm:w-5 sm:h-5" />
                   {t.startChessTutorial}
                 </Button>
               </CardContent>
@@ -1328,23 +1389,23 @@ const Index = () => {
                 }
               }}
             >
-              <CardHeader className="p-6 sm:p-8">
-                <div className="text-center space-y-4">
-                  <div className="text-6xl sm:text-7xl lg:text-8xl animate-float" style={{ animationDelay: "0.2s" }}>
+              <CardHeader className="p-4 sm:p-6 md:p-8">
+                <div className="text-center space-y-3 sm:space-y-4">
+                  <div className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl animate-float" style={{ animationDelay: "0.2s" }}>
                     {"{}"}
                   </div>
-                  <CardTitle className="text-2xl sm:text-3xl lg:text-4xl font-mono text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400">
+                  <CardTitle className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-mono text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400">
                     {t.startQuest}
                   </CardTitle>
                 </div>
               </CardHeader>
-              <CardContent className="p-6 sm:p-8 pt-0 space-y-4">
-                <p className="text-sm sm:text-base text-cyan-100/90 text-center">
+              <CardContent className="p-4 sm:p-6 md:p-8 pt-0 space-y-3 sm:space-y-4">
+                <p className="text-xs sm:text-sm md:text-base text-cyan-100/90 text-center leading-relaxed">
                   {language === 'en' ? "Jump straight into learning C programming through 25 cyberpunk-themed coding challenges." : "25 साइबरपंक-थीम वाली कोडिंग चुनौतियों के माध्यम से सीधे C प्रोग्रामिंग सीखने में कूदें।"}
                 </p>
-                <div className="bg-purple-500/10 border border-purple-500/30 rounded-lg p-4">
-                  <h3 className="font-bold text-sm sm:text-base mb-2 text-purple-400 font-mono">{t.whatYouGet}</h3>
-                  <ul className="space-y-2 text-xs sm:text-sm text-cyan-100/80">
+                <div className="bg-purple-500/10 border border-purple-500/30 rounded-lg p-3 sm:p-4">
+                  <h3 className="font-bold text-xs sm:text-sm md:text-base mb-2 text-purple-400 font-mono">{t.whatYouGet}</h3>
+                  <ul className="space-y-1.5 sm:space-y-2 text-[10px] sm:text-xs md:text-sm text-cyan-100/80">
                     <li className="flex items-start gap-2">
                       <span className="text-pink-400">💻</span>
                       <span>{t.interactiveLessons}</span>
@@ -1363,8 +1424,8 @@ const Index = () => {
                     </li>
                   </ul>
                 </div>
-                <Button className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-400 hover:to-pink-400 text-black font-bold text-base sm:text-lg py-6 font-mono group-hover:scale-105 transition-transform">
-                  <Code className="mr-2 w-5 h-5" />
+                <Button className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-400 hover:to-pink-400 text-black font-bold text-sm sm:text-base md:text-lg py-4 sm:py-5 md:py-6 font-mono group-hover:scale-105 transition-transform">
+                  <Code className="mr-1 sm:mr-2 w-4 h-4 sm:w-5 sm:h-5" />
                   {t.beginProgramming}
                 </Button>
               </CardContent>
@@ -1420,11 +1481,11 @@ const Index = () => {
         <LanguageSelector />
         <div className="max-w-7xl mx-auto space-y-6 sm:space-y-8">
           {/* Header */}
-          <div className="text-center space-y-4">
-            <h1 className="text-3xl sm:text-4xl lg:text-6xl font-bold font-mono text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-pink-400 to-purple-400 animate-fade-in">
+          <div className="text-center space-y-2 sm:space-y-4">
+            <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-6xl font-bold font-mono text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-pink-400 to-purple-400 animate-fade-in px-2">
               CHESS BASICS TUTORIAL
             </h1>
-            <p className="text-sm sm:text-base lg:text-xl text-cyan-300/90 font-mono">
+            <p className="text-xs sm:text-sm md:text-base lg:text-xl text-cyan-300/90 font-mono px-2">
               Master the pieces before you master the code
             </p>
             <div className="flex justify-center gap-2">
@@ -1444,44 +1505,44 @@ const Index = () => {
           </div>
 
           {/* Main Content */}
-          <div className="grid lg:grid-cols-2 gap-6 lg:gap-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 lg:gap-8">
             {/* Left: Piece Information */}
             <Card className="border-cyan-500/30 bg-gradient-to-br from-black/50 to-purple-950/30 shadow-2xl">
-              <CardHeader className="p-4 sm:p-6">
+              <CardHeader className="p-3 sm:p-4 md:p-6">
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <div className="text-6xl sm:text-7xl lg:text-8xl animate-scale-in">
+                  <div className="flex items-center gap-2 sm:gap-3 md:gap-4">
+                    <div className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl animate-scale-in">
                       {currentPiece.unicode}
                     </div>
                     <div>
-                      <CardTitle className="text-2xl sm:text-3xl lg:text-4xl font-mono text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-pink-400">
+                      <CardTitle className="text-lg sm:text-xl md:text-2xl lg:text-3xl xl:text-4xl font-mono text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-pink-400">
                         {currentPiece.name}
                       </CardTitle>
-                      <Badge className="mt-2 bg-purple-500/20 text-purple-400 border-purple-400 font-mono">
+                      <Badge className="mt-1 sm:mt-2 text-xs sm:text-sm bg-purple-500/20 text-purple-400 border-purple-400 font-mono">
                         Value: {currentPiece.value === 999 ? "∞" : currentPiece.value}
                       </Badge>
                     </div>
                   </div>
                 </div>
               </CardHeader>
-              <CardContent className="p-4 sm:p-6 pt-0 space-y-4">
-                <div className="bg-cyan-500/10 border border-cyan-500/30 rounded-lg p-4">
-                  <h3 className="font-bold text-lg mb-2 text-cyan-400 font-mono">Description:</h3>
-                  <p className="text-sm sm:text-base text-cyan-100/90">{currentPiece.description}</p>
+              <CardContent className="p-3 sm:p-4 md:p-6 pt-0 space-y-3 sm:space-y-4">
+                <div className="bg-cyan-500/10 border border-cyan-500/30 rounded-lg p-3 sm:p-4">
+                  <h3 className="font-bold text-sm sm:text-base md:text-lg mb-1.5 sm:mb-2 text-cyan-400 font-mono">Description:</h3>
+                  <p className="text-xs sm:text-sm md:text-base text-cyan-100/90 leading-relaxed">{currentPiece.description}</p>
                 </div>
 
-                <div className="bg-pink-500/10 border border-pink-500/30 rounded-lg p-4">
-                  <h3 className="font-bold text-lg mb-2 text-pink-400 font-mono">Movement Pattern:</h3>
-                  <p className="text-sm sm:text-base text-cyan-100/90">{currentPiece.movePattern}</p>
+                <div className="bg-pink-500/10 border border-pink-500/30 rounded-lg p-3 sm:p-4">
+                  <h3 className="font-bold text-sm sm:text-base md:text-lg mb-1.5 sm:mb-2 text-pink-400 font-mono">Movement Pattern:</h3>
+                  <p className="text-xs sm:text-sm md:text-base text-cyan-100/90 leading-relaxed">{currentPiece.movePattern}</p>
                 </div>
 
-                <div className="bg-purple-500/10 border border-purple-500/30 rounded-lg p-4">
-                  <h3 className="font-bold text-lg mb-3 text-purple-400 font-mono">Examples:</h3>
-                  <ol className="space-y-2">
+                <div className="bg-purple-500/10 border border-purple-500/30 rounded-lg p-3 sm:p-4">
+                  <h3 className="font-bold text-sm sm:text-base md:text-lg mb-2 sm:mb-3 text-purple-400 font-mono">Examples:</h3>
+                  <ol className="space-y-1.5 sm:space-y-2">
                     {currentPiece.examples.map((example, idx) => (
-                      <li key={idx} className="flex gap-3 items-start">
-                        <Badge className="bg-cyan-500/20 text-cyan-400 border-cyan-500/50 font-mono">{idx + 1}</Badge>
-                        <span className="text-sm text-cyan-100/90">{example}</span>
+                      <li key={idx} className="flex gap-2 sm:gap-3 items-start">
+                        <Badge className="text-xs bg-cyan-500/20 text-cyan-400 border-cyan-500/50 font-mono flex-shrink-0">{idx + 1}</Badge>
+                        <span className="text-xs sm:text-sm text-cyan-100/90 leading-relaxed">{example}</span>
                       </li>
                     ))}
                   </ol>
@@ -1499,19 +1560,19 @@ const Index = () => {
                     
                     setTimeout(() => setChessboardAnimate(false), 2000);
                   }}
-                  className="w-full bg-gradient-to-r from-cyan-500 via-pink-500 to-purple-500 hover:from-cyan-400 hover:via-pink-400 hover:to-purple-400 text-black font-bold text-lg py-6 font-mono"
+                  className="w-full bg-gradient-to-r from-cyan-500 via-pink-500 to-purple-500 hover:from-cyan-400 hover:via-pink-400 hover:to-purple-400 text-black font-bold text-sm sm:text-base md:text-lg py-4 sm:py-5 md:py-6 font-mono"
                   size="lg"
                 >
-                  <Sparkles className="mr-2 w-5 h-5" />
+                  <Sparkles className="mr-1 sm:mr-2 w-4 h-4 sm:w-5 sm:h-5" />
                   Demonstrate Move
                 </Button>
               </CardContent>
             </Card>
 
             {/* Right: Interactive 3D Chessboard */}
-            <div className="flex flex-col items-center justify-center space-y-4">
+            <div className="flex flex-col items-center justify-center space-y-3 sm:space-y-4">
               <div className="w-full max-w-2xl perspective-1000">
-                <div className={`grid grid-cols-8 gap-0 border-4 border-cyan-500 rounded-lg overflow-hidden shadow-2xl transition-all duration-500 transform hover:scale-105 ${
+                <div className={`grid grid-cols-8 gap-0 border-2 sm:border-3 md:border-4 border-cyan-500 rounded-lg overflow-hidden shadow-2xl transition-all duration-500 transform hover:scale-105 ${
                   chessboardAnimate ? "animate-scale-in shadow-[0_0_60px_rgba(6,182,212,0.8)] scale-110" : "shadow-[0_0_30px_rgba(6,182,212,0.4)]"
                 }`}>
                   {Array.from({ length: 64 }).map((_, i) => {
@@ -1534,13 +1595,13 @@ const Index = () => {
                     return (
                       <div
                         key={i}
-                        className={`aspect-square flex items-center justify-center text-4xl sm:text-5xl lg:text-6xl font-bold transition-all duration-500 ${
+                        className={`aspect-square flex items-center justify-center text-2xl xs:text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold transition-all duration-500 ${
                           isLight ? "bg-chess-light" : "bg-chess-dark"
                         } ${
                           isPrimary 
-                            ? "bg-pink-400/60 ring-4 ring-pink-400 animate-pulse z-10" 
+                            ? "bg-pink-400/60 ring-2 sm:ring-4 ring-pink-400 animate-pulse z-10" 
                             : isHighlighted 
-                              ? "bg-cyan-400/40 ring-2 ring-cyan-400" 
+                              ? "bg-cyan-400/40 ring-1 sm:ring-2 ring-cyan-400" 
                               : ""
                         } ${
                           isHighlighted && chessboardAnimate ? "scale-110" : ""
@@ -1556,7 +1617,7 @@ const Index = () => {
                     );
                   })}
                 </div>
-                <div className="flex justify-around mt-3 text-sm sm:text-base text-cyan-400/80 font-mono font-bold">
+                <div className="flex justify-around mt-2 sm:mt-3 text-xs sm:text-sm md:text-base text-cyan-400/80 font-mono font-bold">
                   {["a", "b", "c", "d", "e", "f", "g", "h"].map(f => (
                     <span key={f} className="text-center w-[12.5%]">{f}</span>
                   ))}
@@ -1566,7 +1627,7 @@ const Index = () => {
           </div>
 
           {/* Navigation Controls */}
-          <div className="flex flex-col sm:flex-row gap-4 justify-between items-center">
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-between items-center">
             <Button
               onClick={() => {
                 if (currentPieceIndex > 0) {
@@ -1588,14 +1649,14 @@ const Index = () => {
               disabled={currentPieceIndex === 0}
               variant="outline"
               size="lg"
-              className="w-full sm:w-auto border-cyan-500/50 text-cyan-400 disabled:opacity-30 font-mono"
+              className="w-full sm:w-auto border-cyan-500/50 text-cyan-400 disabled:opacity-30 font-mono text-sm sm:text-base py-4 sm:py-6"
             >
-              <ArrowLeft className="mr-2 w-5 h-5" />
+              <ArrowLeft className="mr-1 sm:mr-2 w-4 h-4 sm:w-5 sm:h-5" />
               Previous Piece
             </Button>
 
             <div className="text-center">
-              <p className="text-lg font-mono text-cyan-400">
+              <p className="text-base sm:text-lg font-mono text-cyan-400">
                 Piece <span className="text-pink-400 font-bold">{safeIndex + 1}</span> of <span className="text-pink-400 font-bold">{chessBasicsPieces.length}</span>
               </p>
             </div>
@@ -1619,10 +1680,10 @@ const Index = () => {
                 }}
                 variant="outline"
                 size="lg"
-                className="w-full sm:w-auto border-pink-500/50 text-pink-400 font-mono"
+                className="w-full sm:w-auto border-pink-500/50 text-pink-400 font-mono text-sm sm:text-base py-4 sm:py-6"
               >
                 Next Piece
-                <ArrowRight className="ml-2 w-5 h-5" />
+                <ArrowRight className="ml-1 sm:ml-2 w-4 h-4 sm:w-5 sm:h-5" />
               </Button>
             ) : (
               <Button
@@ -1648,9 +1709,9 @@ const Index = () => {
                   });
                 }}
                 size="lg"
-                className="w-full sm:w-auto bg-gradient-to-r from-cyan-500 via-pink-500 to-purple-500 hover:from-cyan-400 hover:via-pink-400 hover:to-purple-400 text-black font-bold text-lg px-8 py-6 font-mono animate-pulse"
+                className="w-full sm:w-auto bg-gradient-to-r from-cyan-500 via-pink-500 to-purple-500 hover:from-cyan-400 hover:via-pink-400 hover:to-purple-400 text-black font-bold text-sm sm:text-base md:text-lg px-6 sm:px-8 py-4 sm:py-5 md:py-6 font-mono animate-pulse"
               >
-                <Trophy className="mr-2 w-5 h-5" />
+                <Trophy className="mr-1 sm:mr-2 w-4 h-4 sm:w-5 sm:h-5" />
                 Start Quest
               </Button>
             )}
@@ -1667,17 +1728,17 @@ const Index = () => {
         <LanguageSelector />
         <div className="max-w-7xl mx-auto space-y-6 sm:space-y-8">
           {/* Header */}
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
             <div>
-              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold flex items-center gap-2 sm:gap-3 font-mono">
-                <Crown className="text-cyan-400 w-8 h-8 sm:w-10 sm:h-10" />
+              <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold flex items-center gap-2 sm:gap-3 font-mono">
+                <Crown className="text-cyan-400 w-6 h-6 sm:w-8 sm:h-8 md:w-10 md:h-10" />
                 <span className="bg-gradient-to-r from-cyan-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
                   CHESS<span className="text-pink-400">VERSE</span>
                 </span>
               </h1>
               <p className="text-xs sm:text-sm text-cyan-300/80 mt-1 sm:mt-2 font-mono">Neural C Programming Grid</p>
             </div>
-            <div className="flex gap-2">
+            <div className="flex gap-2 w-full sm:w-auto">
               <Button
                 variant="outline"
                 size="sm"
@@ -1686,10 +1747,10 @@ const Index = () => {
                   setCurrentPieceIndex(0);
                   setHighlightSquares([]);
                 }}
-                className="border-purple-500/50 text-purple-400 hover:bg-purple-500/10 font-mono"
+                className="flex-1 sm:flex-initial border-purple-500/50 text-purple-400 hover:bg-purple-500/10 font-mono text-xs sm:text-sm py-4 sm:py-2"
                 title="Review Chess Basics"
               >
-                <Crown className="w-4 h-4 mr-1" />
+                <Crown className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
                 Chess Basics
               </Button>
               <Button
@@ -1716,7 +1777,7 @@ const Index = () => {
                     audioRef.current.pause();
                   }
                 }}
-                className="rounded-full"
+                className="rounded-full min-w-[44px] min-h-[44px] sm:min-w-0 sm:min-h-0"
                 title={isMuted ? "Unmute music" : "Mute music"}
               >
                 {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
@@ -1745,10 +1806,21 @@ const Index = () => {
                     </span>
                   </CardDescription>
                 </div>
-                <Button onClick={() => setCurrentScreen("badges")} variant="outline" size="sm" className="w-full sm:w-auto">
-                  <Trophy className="mr-1 sm:mr-2 w-4 h-4" />
-                  <span className="text-xs sm:text-sm">Badges ({progress.badges.length})</span>
-                </Button>
+                <div className="flex gap-2">
+                  <Button onClick={() => setCurrentScreen("badges")} variant="outline" size="sm" className="w-full sm:w-auto">
+                    <Trophy className="mr-1 sm:mr-2 w-4 h-4" />
+                    <span className="text-xs sm:text-sm">Badges ({progress.badges.length})</span>
+                  </Button>
+                  {progress.completedLessons.length === 25 && (
+                    <Button 
+                      onClick={() => setShowCertificate(true)} 
+                      className="bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-400 hover:to-orange-400 text-black font-bold"
+                      size="sm"
+                    >
+                      🏆 Certificate
+                    </Button>
+                  )}
+                </div>
               </div>
             </CardHeader>
             <CardContent className="p-4 sm:p-6 pt-0 sm:pt-0">
@@ -2019,11 +2091,11 @@ const Index = () => {
   // Badges Screen
   if (currentScreen === "badges") {
     return (
-      <div className="min-h-screen p-3 sm:p-6 lg:p-8">
+      <div className="min-h-screen w-full bg-gradient-to-br from-black via-purple-950 to-cyan-950 p-3 sm:p-6 lg:p-8">
         <LanguageSelector />
         <div className="max-w-6xl mx-auto space-y-6 sm:space-y-8">
           <div className="flex items-center gap-3 sm:gap-4">
-            <Button variant="outline" size="sm" onClick={() => setCurrentScreen("dashboard")}>
+            <Button variant="outline" size="sm" onClick={() => setCurrentScreen("dashboard")} className="min-h-[44px]">
               ← Back
             </Button>
             <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold flex items-center gap-2 sm:gap-3 font-mono">
@@ -2060,7 +2132,7 @@ const Index = () => {
             })}
           </div>
 
-          <Button variant="outline" onClick={() => setCurrentScreen("dashboard")} className="w-full">
+          <Button variant="outline" onClick={() => setCurrentScreen("dashboard")} className="w-full min-h-[44px]">
             Return to Path
           </Button>
         </div>
@@ -2078,31 +2150,48 @@ const Index = () => {
         <LanguageSelector />
         {/* Success Modal */}
         <Dialog open={showSuccessModal} onOpenChange={setShowSuccessModal}>
-          <DialogContent className="sm:max-w-md border-primary/50 bg-gradient-to-br from-card via-card to-primary/10">
-            <DialogHeader>
+          <DialogContent className="sm:max-w-md border-primary/50 bg-gradient-to-br from-card via-card to-primary/10 overflow-hidden">
+            {/* Confetti/Sparkle effect background */}
+            <div className="absolute inset-0 pointer-events-none overflow-hidden">
+              <div className="absolute top-0 left-1/4 text-4xl animate-float opacity-70">✨</div>
+              <div className="absolute top-10 right-1/4 text-3xl animate-float opacity-60" style={{animationDelay: '0.3s'}}>🎉</div>
+              <div className="absolute bottom-10 left-1/3 text-3xl animate-float opacity-60" style={{animationDelay: '0.6s'}}>⭐</div>
+              <div className="absolute top-1/2 right-10 text-2xl animate-float opacity-50" style={{animationDelay: '0.9s'}}>💫</div>
+              <div className="absolute bottom-5 right-1/3 text-3xl animate-float opacity-60" style={{animationDelay: '0.4s'}}>🏆</div>
+              <div className="absolute top-5 left-10 text-2xl animate-float opacity-50" style={{animationDelay: '0.7s'}}>👑</div>
+            </div>
+
+            <DialogHeader className="relative z-10">
               <div className="flex justify-center mb-4">
-                <div className="text-6xl bounce-in">
-                  <PartyPopper className="w-20 h-20 text-primary animate-pulse" />
+                <div className="text-6xl animate-bounce-in scale-in">
+                  <PartyPopper className="w-16 h-16 sm:w-20 sm:h-20 text-primary animate-pulse" />
                 </div>
               </div>
-              <DialogTitle className="text-2xl sm:text-3xl text-center text-gradient-animate">
+              <DialogTitle className="text-2xl sm:text-3xl text-center bg-gradient-to-r from-cyan-400 via-pink-400 to-purple-400 bg-clip-text text-transparent animate-fade-in font-bold">
                 🎉 Quest Complete! 🎉
               </DialogTitle>
-              <DialogDescription className="text-center text-base sm:text-lg pt-2">
-                You've mastered <span className="text-primary font-bold">{currentLesson.title}</span>!
+              <DialogDescription className="text-center text-base sm:text-lg pt-2 animate-fade-in" style={{animationDelay: '0.2s'}}>
+                <span className="text-cyan-400 font-bold">{progress.username}</span>, you've mastered <span className="text-primary font-bold">{currentLesson.title}</span>!
               </DialogDescription>
             </DialogHeader>
             
-            <div className="flex flex-col gap-4 py-4">
-              <div className="bg-primary/10 border border-primary/30 rounded-lg p-4 text-center">
-                <div className="text-4xl mb-2">+100 XP</div>
-                <div className="text-sm text-muted-foreground">Experience Gained</div>
+            <div className="flex flex-col gap-4 py-4 relative z-10">
+              <div className="bg-gradient-to-br from-cyan-500/20 via-purple-500/20 to-pink-500/20 border-2 border-cyan-400/50 rounded-lg p-4 text-center animate-scale-in shadow-lg shadow-cyan-500/30" style={{animationDelay: '0.3s'}}>
+                <div className="text-5xl sm:text-6xl font-bold bg-gradient-to-r from-cyan-400 via-pink-400 to-purple-400 bg-clip-text text-transparent mb-2 animate-bounce-in" style={{animationDelay: '0.4s'}}>
+                  +100 XP
+                </div>
+                <div className="text-sm text-cyan-300/90 font-semibold">Experience Gained</div>
+                <div className="flex justify-center gap-1 mt-2">
+                  <Star className="w-5 h-5 text-yellow-400 animate-bounce-in" style={{animationDelay: '0.5s'}} />
+                  <Star className="w-5 h-5 text-yellow-400 animate-bounce-in" style={{animationDelay: '0.6s'}} />
+                  <Star className="w-5 h-5 text-yellow-400 animate-bounce-in" style={{animationDelay: '0.7s'}} />
+                </div>
               </div>
               
-              <div className="flex gap-2">
+              <div className="flex gap-2 animate-fade-in" style={{animationDelay: '0.8s'}}>
                 <Button
                   variant="outline"
-                  className="flex-1"
+                  className="flex-1 border-cyan-500/50 hover:bg-cyan-500/10 transition-all hover:scale-105"
                   onClick={() => {
                     setShowSuccessModal(false);
                     setCurrentScreen("dashboard");
@@ -2119,7 +2208,7 @@ const Index = () => {
                 
                 {hasNextLesson && (
                   <Button
-                    className="flex-1 bg-gradient-to-r from-primary to-secondary hover:from-primary/90 hover:to-secondary/90 animate-pulse"
+                    className="flex-1 bg-gradient-to-r from-cyan-500 via-purple-500 to-pink-500 hover:from-cyan-400 hover:via-purple-400 hover:to-pink-400 text-black font-bold animate-pulse shadow-lg shadow-pink-500/50 transition-all hover:scale-105"
                     onClick={() => {
                     setShowSuccessModal(false);
                     // Play move sound
@@ -2137,7 +2226,7 @@ const Index = () => {
                 
                 {!hasNextLesson && (
                   <Button
-                    className="flex-1 bg-gradient-to-r from-cyan-500 to-purple-500 hover:from-cyan-400 hover:to-purple-400"
+                    className="flex-1 bg-gradient-to-r from-cyan-500 to-purple-500 hover:from-cyan-400 hover:to-purple-400 text-black font-bold shadow-lg shadow-purple-500/50 transition-all hover:scale-105"
                     onClick={() => {
                       setShowSuccessModal(false);
                       // Show chess tutorial for completed lesson
@@ -2167,10 +2256,171 @@ const Index = () => {
                     setCurrentScreen("chess-tutorial");
                   }
                 }}
-                className="w-full text-xs text-cyan-400 hover:text-cyan-300"
+                className="w-full text-xs text-cyan-400 hover:text-cyan-300 animate-fade-in transition-all hover:scale-105"
+                style={{animationDelay: '1s'}}
               >
                 or Learn Chess Move First →
               </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Certificate Modal */}
+        <Dialog open={showCertificate} onOpenChange={setShowCertificate}>
+          <DialogContent className="max-w-4xl bg-gradient-to-br from-black via-purple-950 to-cyan-950 border-2 border-cyan-500/50 overflow-hidden">
+            {/* Confetti background */}
+            <div className="absolute inset-0 overflow-hidden pointer-events-none">
+              {[...Array(50)].map((_, i) => (
+                <div
+                  key={i}
+                  className="absolute text-2xl animate-float"
+                  style={{
+                    top: Math.random() * 100 + '%',
+                    left: Math.random() * 100 + '%',
+                    animationDelay: Math.random() * 3 + 's',
+                    animationDuration: Math.random() * 2 + 3 + 's'
+                  }}
+                >
+                  {['🏆', '⭐', '👑', '🎉', '✨'][Math.floor(Math.random() * 5)]}
+                </div>
+              ))}
+            </div>
+
+            <div className="relative z-10 text-center space-y-6 p-8 certificate-modal-content">
+              <div className="flex justify-center mb-4">
+                <Trophy className="w-24 h-24 text-yellow-400 animate-bounce" />
+              </div>
+              
+              <h1 className="text-5xl font-bold bg-gradient-to-r from-yellow-400 via-pink-400 to-purple-400 bg-clip-text text-transparent">
+                Certificate of Achievement
+              </h1>
+              
+              <div className="border-4 border-cyan-500/50 rounded-lg p-8 bg-black/50 backdrop-blur-sm space-y-4">
+                <p className="text-lg text-cyan-300">This is to certify that</p>
+                <h2 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-400">
+                  {progress.username}
+                </h2>
+                <p className="text-lg text-cyan-300">has successfully completed</p>
+                <h3 className="text-3xl font-bold text-pink-400">ChessVerse: C Programming Quest</h3>
+                <p className="text-base text-gray-400">All 25 Lessons Mastered</p>
+                
+                <div className="flex justify-center gap-8 pt-6">
+                  <div className="text-center">
+                    <Trophy className="w-12 h-12 text-yellow-400 mx-auto mb-2" />
+                    <p className="text-sm text-gray-400">Total XP</p>
+                    <p className="text-xl font-bold text-cyan-400">{progress.xp}</p>
+                  </div>
+                  <div className="text-center">
+                    <Crown className="w-12 h-12 text-purple-400 mx-auto mb-2" />
+                    <p className="text-sm text-gray-400">Level</p>
+                    <p className="text-xl font-bold text-purple-400">{progress.level}</p>
+                  </div>
+                  <div className="text-center">
+                    <Award className="w-12 h-12 text-pink-400 mx-auto mb-2" />
+                    <p className="text-sm text-gray-400">Badges</p>
+                    <p className="text-xl font-bold text-pink-400">{progress.badges.length}</p>
+                  </div>
+                </div>
+
+                <div className="pt-8 border-t border-cyan-500/30 mt-8">
+                  <div className="flex justify-between items-end px-8 mb-6">
+                    {/* Left Signature */}
+                    <div className="text-center">
+                      <div className="border-b-2 border-cyan-500/50 w-48 mb-2"></div>
+                      <p className="text-sm font-semibold text-cyan-400">Parth D. Joshi</p>
+                      <p className="text-xs text-gray-400">Assistant Professor</p>
+                    </div>
+                    
+                    {/* Right Signature */}
+                    <div className="text-center">
+                      <div className="border-b-2 border-cyan-500/50 w-48 mb-2"></div>
+                      <p className="text-sm font-semibold text-cyan-400">Dr. Manish Shah</p>
+                      <p className="text-xs text-gray-400">President, LJK</p>
+                    </div>
+                  </div>
+                  
+                  <p className="text-xs text-gray-500">Issued on {new Date().toLocaleDateString()}</p>
+                  <p className="text-xs text-gray-400 mt-2">ChessVerse © 2025</p>
+                  <p className="text-xs text-gray-500 mt-3 italic">
+                    * This is an e-certificate. No physical signature is required.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex gap-4 pt-4">
+                <Button
+                  onClick={async () => {
+                    try {
+                      const certElement = document.querySelector('.certificate-modal-content') as HTMLElement;
+                      if (!certElement) {
+                        toast({
+                          title: "Error",
+                          description: "Certificate element not found",
+                          variant: "destructive"
+                        });
+                        return;
+                      }
+
+                      toast({
+                        title: "Generating...",
+                        description: "Please wait while we create your certificate"
+                      });
+
+                      const canvas = await html2canvas(certElement, {
+                        backgroundColor: '#0a0a0a',
+                        scale: 3,
+                        useCORS: true,
+                        allowTaint: true,
+                        logging: false,
+                        width: certElement.scrollWidth,
+                        height: certElement.scrollHeight
+                      });
+                      
+                      canvas.toBlob((blob) => {
+                        if (blob) {
+                          const url = URL.createObjectURL(blob);
+                          const link = document.createElement('a');
+                          link.download = `ChessVerse_Certificate_${progress.username.replace(/\s+/g, '_')}.png`;
+                          link.href = url;
+                          document.body.appendChild(link);
+                          link.click();
+                          document.body.removeChild(link);
+                          URL.revokeObjectURL(url);
+                          
+                          toast({
+                            title: "Success! 🎉",
+                            description: "Certificate downloaded successfully"
+                          });
+                        }
+                      }, 'image/png', 1.0);
+                    } catch (error) {
+                      console.error('Download failed:', error);
+                      toast({
+                        title: "Download Failed",
+                        description: "Please try using the Print option to save as PDF",
+                        variant: "destructive"
+                      });
+                    }
+                  }}
+                  className="flex-1 bg-gradient-to-r from-cyan-500 to-purple-500 hover:from-cyan-400 hover:to-purple-400 text-black font-bold"
+                >
+                  💾 Download PNG
+                </Button>
+                <Button
+                  onClick={() => window.print()}
+                  variant="outline"
+                  className="flex-1 border-purple-500/50 text-purple-400"
+                >
+                  🖨️ Save PDF
+                </Button>
+                <Button
+                  onClick={() => setShowCertificate(false)}
+                  variant="outline"
+                  className="flex-1 border-cyan-500/50 text-cyan-400"
+                >
+                  Close
+                </Button>
+              </div>
             </div>
           </DialogContent>
         </Dialog>
@@ -2188,7 +2438,7 @@ const Index = () => {
           </div>
 
           {/* Dual Pane - Stack on mobile, side-by-side on md+ */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-3 md:gap-4 h-auto md:h-[calc(100vh-120px)]">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-3 md:gap-4 h-auto md:h-[calc(100vh-150px)]">
             {/* Left Pane - The Codex */}
             <Card className="flex flex-col overflow-hidden h-auto md:h-full">
               <CardHeader className="p-2 sm:p-3 md:p-4 lg:p-6 pb-1 sm:pb-2 md:pb-3">

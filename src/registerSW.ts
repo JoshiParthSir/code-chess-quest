@@ -1,11 +1,13 @@
 export function registerServiceWorker() {
   if ('serviceWorker' in navigator) {
+    console.log('Service Worker is supported');
     window.addEventListener('load', () => {
       const swPath = import.meta.env.BASE_URL + 'sw.js';
+      console.log('Attempting to register service worker at:', swPath);
       navigator.serviceWorker
         .register(swPath)
         .then((registration) => {
-          console.log('✅ ServiceWorker registered:', registration);
+          console.log('✅ ServiceWorker registered successfully:', registration.scope);
           
           // Check for updates periodically
           setInterval(() => {
@@ -26,8 +28,11 @@ export function registerServiceWorker() {
         })
         .catch((error) => {
           console.error('❌ ServiceWorker registration failed:', error);
+          console.error('Error details:', error.message);
         });
     });
+  } else {
+    console.warn('Service Worker is not supported in this browser');
   }
 }
 

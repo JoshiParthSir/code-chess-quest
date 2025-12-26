@@ -1,14 +1,23 @@
 import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Crown, Sparkles, Trophy, Code, ChevronRight, Mic, MicOff, Download } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { type Language, getTranslation } from "@/lib/translations";
 
 const Index = () => {
+  const navigate = useNavigate();
   const [language, setLanguage] = useState<Language>(() => {
     const saved = localStorage.getItem('chessverse-language');
     return (saved as Language) || 'en';
   });
+  const [playerName, setPlayerName] = useState<string>(() => {
+    return localStorage.getItem('chessverse-player-name') || '';
+  });
+  const [showNameInput, setShowNameInput] = useState(false);
+  const [showLanding, setShowLanding] = useState<boolean>(true);
+  const [tempName, setTempName] = useState('');
   const [showStory, setShowStory] = useState(false);
   const [storyStep, setStoryStep] = useState(0);
   const [isNarrating, setIsNarrating] = useState(false);
@@ -25,6 +34,22 @@ const Index = () => {
   useEffect(() => {
     localStorage.setItem('chessverse-language', language);
   }, [language]);
+
+  // Save playerName to localStorage whenever it changes
+  useEffect(() => {
+    if (playerName) {
+      localStorage.setItem('chessverse-player-name', playerName);
+    }
+  }, [playerName]);
+
+  // Auto-skip landing page for returning users
+  useEffect(() => {
+    const savedName = localStorage.getItem('chessverse-player-name');
+    if (savedName) {
+      setShowLanding(false);
+      setShowStory(true);
+    }
+  }, []);
 
   // Initialize speech synthesis and wait for voices to load
   useEffect(() => {
@@ -171,13 +196,24 @@ const Index = () => {
 
   // PWA Install Prompt
   useEffect(() => {
+    console.log('Setting up PWA install prompt listener...');
+    
     const handleBeforeInstallPrompt = (e: any) => {
+      console.log('beforeinstallprompt event fired!');
       e.preventDefault();
       setDeferredPrompt(e);
       setShowInstallButton(true);
+      console.log('Install button should now be visible');
     };
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    
+    // Check if already installed
+    if (window.matchMedia('(display-mode: standalone)').matches) {
+      console.log('App is already installed');
+    } else {
+      console.log('App is not installed, waiting for install prompt...');
+    }
 
     return () => {
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
@@ -185,18 +221,290 @@ const Index = () => {
   }, []);
 
   const handleInstallClick = async () => {
-    if (!deferredPrompt) return;
-
-    deferredPrompt.prompt();
-    const { outcome } = await deferredPrompt.userChoice;
+    console.log('Install button clicked');
     
-    if (outcome === 'accepted') {
-      console.log('PWA installed');
+    if (!deferredPrompt) {
+      console.log('No deferred prompt available');
+      return;
     }
-    
-    setDeferredPrompt(null);
-    setShowInstallButton(false);
+
+    try {
+      console.log('Showing install prompt...');
+      await deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      
+      console.log(`Install prompt outcome: ${outcome}`);
+      
+      if (outcome === 'accepted') {
+        console.log('✅ PWA installed successfully!');
+      } else {
+        console.log('❌ PWA installation dismissed');
+      }
+    } catch (error) {
+      console.error('Error during installation:', error);
+    } finally {
+      setDeferredPrompt(null);
+      setShowInstallButton(false);
+    }
   };
+
+  const handleLanguageChange = (value: Language) => {
+    setLanguage(value);
+  };
+
+  // Landing Page with About Section
+  if (showLanding) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-black via-purple-950 to-cyan-950 flex items-center justify-center relative overflow-hidden p-4">
+        {/* Animated stars background */}
+        <div className="absolute inset-0 overflow-hidden">
+          {[...Array(50)].map((_, i) => (
+            <div
+              key={i}
+              className="absolute bg-white rounded-full animate-pulse"
+              style={{
+                width: Math.random() * 3 + 1 + 'px',
+                height: Math.random() * 3 + 1 + 'px',
+                top: Math.random() * 100 + '%',
+                left: Math.random() * 100 + '%',
+                animationDelay: Math.random() * 3 + 's',
+                animationDuration: Math.random() * 2 + 2 + 's'
+              }}
+            />
+          ))}
+        </div>
+
+        {/* Language Selector - Top Right */}
+        <div className="absolute top-4 right-4 z-10">
+          <Select value={language} onValueChange={handleLanguageChange}>
+            <SelectTrigger className="w-[140px] bg-black/40 border-cyan-500/50 text-white backdrop-blur-sm">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent className="bg-black/95 border-cyan-500/50 text-white">
+              <SelectItem value="en">🇬🇧 English</SelectItem>
+              <SelectItem value="hi">🇮🇳 हिंदी</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* PWA Install Button */}
+        {showInstallButton && (
+          <Button
+            onClick={handleInstallClick}
+            className="absolute top-4 left-4 z-10 bg-gradient-to-r from-purple-600 to-cyan-600 hover:from-purple-700 hover:to-cyan-700"
+            size="sm"
+          >
+            📱 {t.install}
+          </Button>
+        )}
+
+        {/* Main Content */}
+        <div className="relative z-10 max-w-4xl w-full">
+          <Card className="bg-black/40 border-cyan-500/50 backdrop-blur-sm">
+            <CardHeader className="text-center space-y-4">
+              <div className="flex justify-center mb-4">
+                <div className="text-6xl md:text-7xl animate-bounce">♟️</div>
+              </div>
+              <CardTitle className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-purple-400 via-cyan-400 to-purple-400 bg-clip-text text-transparent">
+                ChessVerse
+              </CardTitle>
+              <CardDescription className="text-lg md:text-xl text-cyan-300">
+                {language === 'hi' ? 'शतरंज के माध्यम से C प्रोग्रामिंग सीखें' : 'Learn C Programming Through Chess'}
+              </CardDescription>
+            </CardHeader>
+            
+            <CardContent className="space-y-6 text-white">
+              {/* About Section */}
+              <div className="space-y-4">
+                <h3 className="text-2xl font-bold text-cyan-400">
+                  {language === 'hi' ? 'के बारे में' : 'About ChessVerse'}
+                </h3>
+                <p className="text-gray-300 leading-relaxed">
+                  {language === 'hi' 
+                    ? 'ChessVerse एक अनोखा शिक्षण मंच है जो शतरंज की रणनीति के साथ C प्रोग्रामिंग को जोड़ता है। प्रत्येक प्रोग्रामिंग अवधारणा को शतरंज के खेल से जुड़े वास्तविक उदाहरणों के माध्यम से सिखाया जाता है।'
+                    : 'ChessVerse is a unique learning platform that combines C programming with chess strategy. Each programming concept is taught through real-world examples tied to the game of chess.'
+                  }
+                </p>
+              </div>
+
+              {/* Features */}
+              <div className="grid md:grid-cols-3 gap-4">
+                <div className="p-4 bg-purple-900/30 rounded-lg border border-purple-500/30">
+                  <div className="text-3xl mb-2">🎯</div>
+                  <h4 className="font-bold text-cyan-400 mb-1">
+                    {language === 'hi' ? '25 पाठ' : '25 Lessons'}
+                  </h4>
+                  <p className="text-sm text-gray-400">
+                    {language === 'hi' ? 'शुरुआत से उन्नत तक' : 'From basics to advanced'}
+                  </p>
+                </div>
+                
+                <div className="p-4 bg-purple-900/30 rounded-lg border border-purple-500/30">
+                  <div className="text-3xl mb-2">🎙️</div>
+                  <h4 className="font-bold text-cyan-400 mb-1">
+                    {language === 'hi' ? 'आवाज कथन' : 'Voice Narration'}
+                  </h4>
+                  <p className="text-sm text-gray-400">
+                    {language === 'hi' ? 'दो भाषाओं में' : 'In two languages'}
+                  </p>
+                </div>
+                
+                <div className="p-4 bg-purple-900/30 rounded-lg border border-purple-500/30">
+                  <div className="text-3xl mb-2">🏆</div>
+                  <h4 className="font-bold text-cyan-400 mb-1">
+                    {language === 'hi' ? 'प्रमाण पत्र' : 'Certificates'}
+                  </h4>
+                  <p className="text-sm text-gray-400">
+                    {language === 'hi' ? 'पूर्णता पर पुरस्कार' : 'Earn on completion'}
+                  </p>
+                </div>
+              </div>
+
+              {/* CTA Buttons */}
+              <div className="flex flex-col sm:flex-row gap-4 pt-4">
+                <Button
+                  onClick={() => {
+                    setShowLanding(false);
+                    setShowNameInput(true);
+                  }}
+                  className="flex-1 bg-gradient-to-r from-purple-600 to-cyan-600 hover:from-purple-700 hover:to-cyan-700 text-white font-bold py-6 text-lg"
+                >
+                  ✨ {language === 'hi' ? 'यात्रा शुरू करें' : 'Begin Journey'}
+                </Button>
+                
+                <Button
+                  onClick={() => navigate('/about')}
+                  variant="outline"
+                  className="flex-1 border-cyan-500/50 text-cyan-400 hover:bg-cyan-500/10 py-6 text-lg"
+                >
+                  📖 {language === 'hi' ? 'और जानें' : 'Learn More'}
+                </Button>
+              </div>
+
+              {/* Credits Section */}
+              <div className="pt-4 border-t border-cyan-500/30">
+                <p className="text-center text-xs text-gray-400">
+                  {language === 'hi' 
+                    ? '🎯 विचारक: ' 
+                    : '🎯 Conceptualized by: '}
+                  <span className="text-purple-400 font-semibold">Dr. Manish Shah</span>
+                </p>
+                <p className="text-center text-xs text-gray-400 mt-1">
+                  {language === 'hi' 
+                    ? '🧑‍💻 विकसित: ' 
+                    : '🧑‍💻 Developed by: '}
+                  <span className="text-cyan-400 font-semibold">Parth D. Joshi</span>
+                </p>
+                <p className="text-center text-xs text-gray-500 mt-2">
+                  {language === 'hi' 
+                    ? '© 2025 ChessVerse. सर्वाधिकार सुरक्षित।' 
+                    : '© 2025 ChessVerse. All rights reserved.'}
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
+  // Player Name Input Screen
+  if (showNameInput) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-black via-purple-950 to-cyan-950 flex items-center justify-center relative overflow-hidden">
+        {/* Language Selector - Top Right */}
+        <div className="absolute top-4 right-4 z-20">
+          <div className="flex gap-2 bg-black/50 backdrop-blur-sm p-2 rounded-lg border border-cyan-500/30">
+            <Button
+              variant={language === 'en' ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => setLanguage('en')}
+              className={`min-h-[44px] min-w-[44px] touch-manipulation text-sm ${language === 'en' ? 'bg-cyan-500 text-black font-bold' : 'text-cyan-400 hover:bg-cyan-500/20'}`}
+            >
+              EN
+            </Button>
+            <Button
+              variant={language === 'hi' ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => setLanguage('hi')}
+              className={`min-h-[44px] min-w-[44px] touch-manipulation text-sm ${language === 'hi' ? 'bg-cyan-500 text-black font-bold' : 'text-cyan-400 hover:bg-cyan-500/20'}`}
+            >
+              हिं
+            </Button>
+          </div>
+        </div>
+
+        {/* Background effects */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute top-20 left-20 w-64 h-64 bg-cyan-500/10 rounded-full blur-3xl animate-pulse" style={{animationDuration: '3s'}}></div>
+          <div className="absolute bottom-20 right-20 w-80 h-80 bg-pink-500/10 rounded-full blur-3xl animate-pulse" style={{animationDuration: '4s', animationDelay: '1s'}}></div>
+        </div>
+
+        {/* Main Content */}
+        <div className="relative z-10 max-w-md mx-auto px-4 sm:px-6">
+          <div className="bg-black/50 backdrop-blur-xl border-2 border-cyan-500/30 rounded-2xl p-6 sm:p-10 shadow-2xl shadow-cyan-500/20">
+            <div className="text-center mb-6">
+              <Crown className="w-16 h-16 sm:w-20 sm:h-20 text-cyan-400 mx-auto mb-4 animate-bounce" />
+              <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-cyan-400 via-pink-400 to-purple-400 bg-clip-text text-transparent mb-2 font-mono">
+                {language === 'en' ? 'NEURAL LINK INITIALIZATION' : 'न्यूरल लिंक प्रारंभ'}
+              </h1>
+              <p className="text-sm sm:text-base text-cyan-300/90 font-mono">
+                {language === 'en' ? 'Enter your Knight name to begin' : 'शुरू करने के लिए अपना नाम दर्ज करें'}
+              </p>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-cyan-400 mb-2 font-mono">
+                  {language === 'en' ? 'Player Name:' : 'खिलाड़ी का नाम:'}
+                </label>
+                <input
+                  type="text"
+                  value={tempName}
+                  onChange={(e) => setTempName(e.target.value)}
+                  onKeyPress={(e) => {
+                    if (e.key === 'Enter' && tempName.trim()) {
+                      setPlayerName(tempName.trim());
+                      setShowNameInput(false);
+                      setShowStory(true);
+                      setStoryStep(0);
+                    }
+                  }}
+                  placeholder={language === 'en' ? 'Enter your name...' : 'अपना नाम दर्ज करें...'}
+                  className="w-full px-4 py-3 bg-black/50 border-2 border-cyan-500/50 rounded-lg text-cyan-100 placeholder-cyan-600/50 focus:border-pink-500 focus:outline-none focus:ring-2 focus:ring-pink-500/50 font-mono transition-all"
+                  autoFocus
+                />
+              </div>
+
+              <Button
+                onClick={() => {
+                  if (tempName.trim()) {
+                    setPlayerName(tempName.trim());
+                    setShowNameInput(false);
+                    setShowStory(true);
+                    setStoryStep(0);
+                  }
+                }}
+                disabled={!tempName.trim()}
+                className="w-full bg-gradient-to-r from-cyan-500 via-purple-500 to-pink-500 hover:from-cyan-400 hover:via-purple-400 hover:to-pink-400 text-black font-bold text-base sm:text-lg py-6 rounded-lg shadow-lg border-2 border-cyan-400/50 disabled:opacity-50 disabled:cursor-not-allowed font-mono"
+              >
+                <Sparkles className="mr-2 w-5 h-5" />
+                {language === 'en' ? 'BEGIN JOURNEY' : 'यात्रा शुरू करें'}
+              </Button>
+            </div>
+
+            <div className="mt-6 pt-6 border-t border-cyan-500/20">
+              <p className="text-xs text-center text-cyan-400/70 font-mono">
+                {language === 'en' 
+                  ? 'Your progress will be saved automatically' 
+                  : 'आपकी प्रगति स्वचालित रूप से सहेजी जाएगी'}
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   // Story Introduction Screen - Animated mission briefing
   if (showStory) {
@@ -235,8 +543,19 @@ const Index = () => {
           </div>
         </div>
 
-        {/* Narration Toggle - Top Right */}
-        <div className="absolute top-4 right-4 z-20">
+        {/* Narration Toggle + Install Button - Top Right */}
+        <div className="absolute top-4 right-4 z-20 flex gap-2">
+          {showInstallButton && (
+            <Button
+              onClick={handleInstallClick}
+              variant="ghost"
+              size="sm"
+              className="border border-cyan-500/30 bg-black/50 backdrop-blur-sm text-cyan-400 hover:bg-cyan-500/10 min-h-[44px] min-w-[44px] touch-manipulation"
+              title="Install ChessVerse as an app"
+            >
+              <Download className="w-5 h-5" />
+            </Button>
+          )}
           <Button
             variant="ghost"
             size="sm"
@@ -388,10 +707,12 @@ const Index = () => {
           <Button
             onClick={handleInstallClick}
             size="sm"
-            className="bg-gradient-to-r from-cyan-500 to-purple-500 hover:from-cyan-400 hover:to-purple-400 text-black font-bold min-h-[44px] touch-manipulation text-xs sm:text-sm"
+            className="bg-gradient-to-r from-cyan-500 to-purple-500 hover:from-cyan-400 hover:to-purple-400 text-black font-bold min-h-[44px] touch-manipulation text-xs sm:text-sm animate-pulse"
+            title="Install ChessVerse as an app"
           >
             <Download className="w-3 h-3 sm:w-4 sm:h-4 sm:mr-1" />
-            <span className="hidden sm:inline">{language === 'en' ? 'Install' : 'इंस्टॉल'}</span>
+            <span className="hidden sm:inline">{language === 'en' ? 'Install App' : 'ऐप इंस्टॉल करें'}</span>
+            <span className="sm:hidden">App</span>
           </Button>
         )}
         <div className="flex gap-1.5 sm:gap-2 bg-black/50 backdrop-blur-sm p-2 rounded-lg border border-cyan-500/30">
