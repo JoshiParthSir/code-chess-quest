@@ -2176,82 +2176,83 @@ const Index = () => {
           </DialogContent>
         </Dialog>
 
-        <div className="min-h-screen p-2 sm:p-4 lg:p-6">
-        <div className="max-w-[1800px] mx-auto space-y-2 sm:space-y-4">
+        <div className="min-h-screen w-full p-1.5 sm:p-3 md:p-4 lg:p-6">
+        <div className="max-w-full md:max-w-[1800px] mx-auto space-y-2 sm:space-y-3 md:space-y-4">
           {/* Header */}
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-4 mb-2">
-            <Button variant="outline" size="sm" onClick={() => setCurrentScreen("dashboard")} className="text-xs sm:text-sm">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-3 md:gap-4 mb-2 sm:mb-3">
+            <Button variant="outline" size="sm" onClick={() => setCurrentScreen("dashboard")} className="text-xs sm:text-sm min-h-[40px]">
               ← Back
             </Button>
-            <Badge variant="outline" className="text-xs sm:text-sm px-2 sm:px-3 py-1 border-cyan-500 text-cyan-400 bg-cyan-500/10 font-mono">
+            <Badge variant="outline" className="text-xs sm:text-sm px-2 sm:px-3 py-1 border-cyan-500 text-cyan-400 bg-cyan-500/10 font-mono break-words">
               Protocol {currentLesson.id}: {currentLesson.title}
             </Badge>
           </div>
 
-          {/* Dual Pane */}
-          <div className="grid lg:grid-cols-2 gap-2 sm:gap-4 h-[calc(100vh-80px)] sm:h-[calc(100vh-120px)]">
+          {/* Dual Pane - Stack on mobile, side-by-side on md+ */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-3 md:gap-4 h-auto md:h-[calc(100vh-120px)]">
             {/* Left Pane - The Codex */}
-            <Card className="flex flex-col overflow-hidden">
-              <CardHeader className="p-3 sm:p-4 lg:p-6 pb-2 sm:pb-4">
-                <CardTitle className="flex items-center gap-2 text-base sm:text-lg lg:text-xl font-mono">
-                  <Code className="text-pink-400 w-4 h-4 sm:w-5 sm:h-5" />
+            <Card className="flex flex-col overflow-hidden h-auto md:h-full">
+              <CardHeader className="p-2 sm:p-3 md:p-4 lg:p-6 pb-1 sm:pb-2 md:pb-3">
+                <CardTitle className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm md:text-base lg:text-lg font-mono break-words">
+                  <Code className="text-pink-400 w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5 flex-shrink-0" />
                   <span className="text-transparent bg-clip-text bg-gradient-to-r from-pink-400 to-purple-400">THE NEURAL CODEX</span>
                 </CardTitle>
               </CardHeader>
-              <CardContent className="flex-1 flex flex-col space-y-2 sm:space-y-4 overflow-auto p-3 sm:p-4 lg:p-6 pt-0">
+              <CardContent className="flex-1 flex flex-col space-y-1.5 sm:space-y-2 md:space-y-3 lg:space-y-4 overflow-y-auto p-2 sm:p-3 md:p-4 lg:p-6 pt-0">
                 {/* Learn Tab */}
-                <div className="space-y-2 sm:space-y-3">
-                  <div className="bg-purple-500/10 border border-purple-500/30 rounded-lg p-2 sm:p-3 lg:p-4">
-                    <h3 className="font-bold text-sm sm:text-base lg:text-lg mb-1 sm:mb-2 text-purple-400 font-mono">♟️ Chess Protocol</h3>
-                    <p className="text-xs sm:text-sm leading-relaxed text-purple-200/90">{currentLesson.analogy}</p>
+                <div className="space-y-1.5 sm:space-y-2 md:space-y-3">
+                  <div className="bg-purple-500/10 border border-purple-500/30 rounded-lg p-1.5 sm:p-2 md:p-3 lg:p-4">
+                    <h3 className="font-bold text-xs sm:text-sm md:text-base lg:text-lg mb-1 sm:mb-1.5 md:mb-2 text-purple-400 font-mono">♟️ Chess Protocol</h3>
+                    <p className="text-xs sm:text-xs md:text-sm lg:text-base leading-relaxed text-purple-200/90">{currentLesson.analogy}</p>
                   </div>
                   
-                  <div className="bg-cyan-500/10 border border-cyan-500/30 rounded-lg p-2 sm:p-3 lg:p-4">
-                    <h3 className="font-bold text-sm sm:text-base lg:text-lg mb-1 sm:mb-2 text-cyan-400 font-mono">💻 C Syntax</h3>
-                    <p className="text-xs sm:text-sm leading-relaxed text-cyan-200/90">{currentLesson.explanation}</p>
+                  <div className="bg-cyan-500/10 border border-cyan-500/30 rounded-lg p-1.5 sm:p-2 md:p-3 lg:p-4">
+                    <h3 className="font-bold text-xs sm:text-sm md:text-base lg:text-lg mb-1 sm:mb-1.5 md:mb-2 text-cyan-400 font-mono">💻 C Syntax</h3>
+                    <p className="text-xs sm:text-xs md:text-sm lg:text-base leading-relaxed text-cyan-200/90">{currentLesson.explanation}</p>
                   </div>
                 </div>
 
                 {/* Challenge */}
-                <div className="bg-gradient-to-br from-pink-500/10 to-purple-500/10 border-2 border-pink-500/50 rounded-lg p-2 sm:p-3 lg:p-4">
-                  <h3 className="font-bold text-sm sm:text-base lg:text-lg mb-2 flex items-center gap-2 font-mono">
-                    <Award className="text-pink-400 w-4 h-4 sm:w-5 sm:h-5" />
+                <div className="bg-gradient-to-br from-pink-500/10 to-purple-500/10 border-2 border-pink-500/50 rounded-lg p-1.5 sm:p-2 md:p-3 lg:p-4">
+                  <h3 className="font-bold text-xs sm:text-sm md:text-base lg:text-lg mb-1.5 sm:mb-2 flex items-center gap-1 sm:gap-2 font-mono break-words">
+                    <Award className="text-pink-400 w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5 flex-shrink-0" />
                     <span className="text-transparent bg-clip-text bg-gradient-to-r from-pink-400 to-purple-400">YOUR MISSION</span>
                   </h3>
-                  <p className="text-xs sm:text-sm mb-3 sm:mb-4">{currentLesson.challenge}</p>
+                  <p className="text-xs sm:text-xs md:text-sm lg:text-base mb-2 sm:mb-2.5 md:mb-3 lg:mb-4">{currentLesson.challenge}</p>
                   
                   {/* Code Editor */}
-                  <div className="space-y-2">
+                  <div className="space-y-1.5 sm:space-y-2">
                     <textarea
                       value={userCode}
                       onChange={(e) => setUserCode(e.target.value)}
-                      className="w-full h-40 sm:h-52 lg:h-64 code-editor resize-none focus:ring-2 focus:ring-primary outline-none text-xs sm:text-sm"
+                      className="w-full h-28 sm:h-36 md:h-40 lg:h-52 xl:h-64 code-editor resize-none focus:ring-2 focus:ring-primary outline-none text-xs sm:text-xs md:text-sm"
                       spellCheck={false}
                     />
                     
-                    <div className="flex flex-wrap gap-1 sm:gap-2">
-                      <Button onClick={runCode} className="flex-1 min-w-[120px] bg-gradient-to-r from-cyan-500 to-purple-500 hover:from-cyan-400 hover:to-purple-400 text-black font-bold text-xs sm:text-sm font-mono border border-cyan-400/50">
-                        <Play className="mr-1 sm:mr-2 w-3 h-3 sm:w-4 sm:h-4" />
-                        EXECUTE
+                    <div className="flex flex-wrap gap-1 sm:gap-1.5">
+                      <Button onClick={runCode} className="flex-1 min-w-[100px] bg-gradient-to-r from-cyan-500 to-purple-500 hover:from-cyan-400 hover:to-purple-400 text-black font-bold text-xs md:text-sm font-mono border border-cyan-400/50 min-h-[36px] sm:min-h-[40px]">
+                        <Play className="mr-1 w-3 h-3 sm:w-3.5 sm:h-3.5 md:w-4 md:h-4" />
+                        <span className="hidden sm:inline">EXECUTE</span>
+                        <span className="sm:hidden">RUN</span>
                       </Button>
                       <Button 
                         variant="outline" 
                         onClick={() => setShowHint(!showHint)}
-                        className="text-xs sm:text-sm px-2 sm:px-4"
+                        className="text-xs md:text-sm px-2 sm:px-3 min-h-[36px] sm:min-h-[40px]"
                       >
                         💡 Hint
                       </Button>
                       <Button 
                         variant="outline" 
                         onClick={showSolution}
-                        className="text-xs sm:text-sm px-2 sm:px-4"
+                        className="text-xs md:text-sm px-2 sm:px-3 min-h-[36px] sm:min-h-[40px]"
                       >
-                        Solution
+                        Sol.
                       </Button>
                     </div>
 
                     {showHint && (
-                      <div className="bg-muted/20 border border-muted rounded p-2 sm:p-3 text-xs sm:text-sm">
+                      <div className="bg-muted/20 border border-muted rounded p-1.5 sm:p-2 md:p-3 text-xs md:text-sm">
                         <strong>Hint:</strong> {currentLesson.hint}
                       </div>
                     )}
@@ -2261,16 +2262,16 @@ const Index = () => {
             </Card>
 
             {/* Right Pane - The Chessboard */}
-            <Card className="flex flex-col overflow-hidden">
-              <CardHeader className="p-3 sm:p-4 lg:p-6 pb-2 sm:pb-4">
-                <CardTitle className="flex items-center gap-2 text-base sm:text-lg lg:text-xl font-mono">
-                  <Crown className="text-cyan-400 w-4 h-4 sm:w-5 sm:h-5" />
+            <Card className="flex flex-col overflow-hidden h-auto md:h-full">
+              <CardHeader className="p-2 sm:p-3 md:p-4 lg:p-6 pb-1 sm:pb-2 md:pb-3">
+                <CardTitle className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm md:text-base lg:text-lg font-mono break-words">
+                  <Crown className="text-cyan-400 w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5 flex-shrink-0" />
                   <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-400">DIGITAL GRID</span>
                 </CardTitle>
               </CardHeader>
-              <CardContent className="flex-1 flex items-center justify-center p-2 sm:p-4 lg:p-6 overflow-auto">
-                <div className="w-full max-w-full sm:max-w-[90vw] lg:max-w-[600px] mx-auto">
-                  <div className={`grid grid-cols-8 gap-0 border-2 sm:border-4 border-primary rounded-lg overflow-hidden shadow-2xl transition-all duration-500 ${
+              <CardContent className="flex-1 flex items-center justify-center p-1.5 sm:p-2 md:p-3 lg:p-4 overflow-auto min-h-[300px] md:min-h-auto">
+                <div className="w-full max-w-full px-1 sm:px-2">
+                  <div className={`grid grid-cols-8 gap-0 border border-sm:border-2 md:border-3 lg:border-4 border-primary rounded-lg overflow-hidden shadow-lg md:shadow-xl transition-all duration-500 ${
                     chessboardAnimate ? "animate-scale-in shadow-[0_0_40px_rgba(155,135,245,0.6)]" : ""
                   }`}>
                     {Array.from({ length: 64 }).map((_, i) => {
@@ -2388,10 +2389,10 @@ const Index = () => {
                       return (
                         <div
                           key={i}
-                          className={`aspect-square flex items-center justify-center text-xl xs:text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold transition-all duration-300 ${
+                          className={`aspect-square flex items-center justify-center text-sm xs:text-base sm:text-xl md:text-2xl lg:text-3xl xl:text-4xl font-bold transition-all duration-300 ${
                             isLight ? "bg-chess-light" : "bg-chess-dark"
                           } ${piece ? "hover:scale-110 cursor-pointer animate-fade-in" : ""} ${
-                            shouldHighlight ? "bg-primary/30 animate-pulse ring-2 ring-primary" : ""
+                            shouldHighlight ? "bg-primary/30 animate-pulse ring-1 ring-primary" : ""
                           }`}
                         >
                           <span className={chessboardAnimate && piece ? "animate-scale-in" : ""}>
@@ -2403,7 +2404,7 @@ const Index = () => {
                   </div>
                   
                   {/* Board Labels */}
-                  <div className="flex justify-around mt-1 sm:mt-2 text-[10px] sm:text-xs text-muted-foreground font-mono">
+                  <div className="flex justify-around mt-1 text-[8px] sm:text-xs text-muted-foreground font-mono">
                     {["a", "b", "c", "d", "e", "f", "g", "h"].map(f => (
                       <span key={f} className="text-center w-[12.5%]">{f}</span>
                     ))}

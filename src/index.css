@@ -73,6 +73,7 @@ All colors MUST be HSL.
   html {
     overflow-x: hidden;
     max-width: 100vw;
+    width: 100%;
   }
 
   body {
@@ -86,7 +87,10 @@ All colors MUST be HSL.
     /* Prevent horizontal scroll on mobile */
     overflow-x: hidden;
     max-width: 100vw;
+    width: 100%;
     position: relative;
+    margin: 0;
+    padding: 0;
   }
 
   /* Mobile-friendly touch targets */

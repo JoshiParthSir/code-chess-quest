@@ -11,7 +11,7 @@ const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <div className="overflow-x-hidden max-w-full">
+    <div className="min-h-screen w-screen overflow-x-hidden">
       <Toaster />
       <Sonner />
       <BrowserRouter 
